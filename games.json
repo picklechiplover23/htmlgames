@@ -309,6 +309,68 @@
     {
       "id": 74,
       "name": "10 Minutes Till Dawn"
+    },
+    {
+      "id": 75,
+      "name": "Arthurs Nightmare"
+    },
+    {
+      "id": 76,
+      "name": "FNAF 2"
+    },
+    {
+      "id": 77,
+      "name": "FNAF 3"
+    },
+    {
+      "id": 78,
+      "name": "FNAF 4"
+    },
+    {
+      "id": 79,
+      "name": "Minecraft"
+    },
+    {
+      "id": 80,
+      "name": "Super Mario 64"
+    },
+    {
+      "id": 81,
+      "name": "Riddle School"
+    },
+    {
+      "id": 82,
+      "name": "Riddle School 2"
+    },
+    {
+      "id": 83,
+      "name": "Riddle School 3"
+    },
+    {
+      "id": 84,
+      "name": "Riddle School 4"
+    },
+    {
+      "id": 85,
+      "name": "Riddle School 5"
+    }
+  ],
+  "9": [
+    {
+      "id": 86,
+      "name": "Riddle School Transfer"
+    },
+    {
+      "id": 87,
+      "name": "Riddle School Transfer 2"
+    },
+    {
+      "id": 88,
+      "name": "Terraria"
+    },
+    {
+      "id": 89,
+      "name": "PEGgle"
     }
   ]
 }
