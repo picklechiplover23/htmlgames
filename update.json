@@ -1,8 +1,9 @@
 {
-  "version": "0.4.1",
-  "tip": "some hotfixes and a small game wave (NO NEED TO REDOWNLOAD FOR THIS ONE)",
-  "list": ["fixed hollow knight (most likely)", "fixed geo dash", "added 9 new games"]
+  "version": "0.4.2",
+  "tip": "small hotfix",
+  "list": [
+    "added a small bunch of games",
+    "fixed gladihoppers (prob not)",
+    "fixed even MORE cacheing issues"
+  ]
 }
-
-
-
