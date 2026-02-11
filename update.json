@@ -1,9 +1,5 @@
 {
-  "version": "0.4.5",
-  "tip": "sorry about no updates im delaying the the BIG update until github stops being a pain and lets me update insomnia",
-  "list": [
-    "added FIVE NIGHTS AT THE BIG E",
-    "added 10+ games",
-    "added better error reporting (for memorial kids)"
-  ]
+  "version": "0.4.6",
+  "tip": "im so sorry that insomnia hasnt dropped yet, its literally ready but github is being annoying",
+  "list": ["added 15+ games", "forgot but probably did some bug fixes"]
 }
