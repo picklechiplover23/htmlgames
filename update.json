@@ -1,5 +1,11 @@
 {
-  "version": "0.4.6",
-  "tip": "im so sorry that insomnia hasnt dropped yet, its literally ready but github is being annoying",
-  "list": ["added 15+ games", "forgot but probably did some bug fixes"]
+  "version": "0.5.0",
+  "tip": "so about insomnia, to be able to host it, it's gonna cost me a bit of money, so ANY donations would really help at me getting yall youtube as quick as I can ",
+  "list": [
+    "added devtools/inspect element to games (click gear icon)",
+    "added 10+ games",
+    "added a new sort command for listing games (do sort abc for alpha and sort id for number sorting)",
+    "added donation goal",
+    "fixed some bugs"
+  ]
 }
