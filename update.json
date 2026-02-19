@@ -1,11 +1,9 @@
 {
-  "version": "0.5.0",
-  "tip": "so about insomnia, to be able to host it, it's gonna cost me a bit of money, so ANY donations would really help at me getting yall youtube as quick as I can ",
+  "version": "0.5.1",
+  "tip": "guys donate NOW we need 30$ raised to be able to get youtube released",
   "list": [
-    "added devtools/inspect element to games (click gear icon)",
     "added 10+ games",
-    "added a new sort command for listing games (do sort abc for alpha and sort id for number sorting)",
-    "added donation goal",
-    "fixed some bugs"
+    "fixed some eruda devtools errors"
   ]
 }
+
