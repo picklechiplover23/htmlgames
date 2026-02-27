@@ -735,6 +735,36 @@
     {
       "id": 176,
       "name": "Gun Mayhem 2"
+    },
+    {
+      "id": 177,
+      "name": "Brotato"
+    },
+    {
+      "id": 178,
+      "name": "Burito Bison Revenege"
+    },
+    {
+      "id": 179,
+      "name": "Clover Pit"
+    },
+    {
+      "id": 180,
+      "name": "Dumb Ways to Die"
+    }
+  ],
+  "18": [
+    {
+      "id": 181,
+      "name": "Plants vs Zombies Modded"
+    },
+    {
+      "id": 182,
+      "name": "Stick With It"
+    },
+    {
+      "id": 183,
+      "name": "Swords and Souls"
     }
   ]
 }
