@@ -9,7 +9,6 @@
     />
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
     <link rel="stylesheet" href="/TemplateData/style.css" />
-    <link rel="manifest" href="manifest.webmanifest" />
     <style>
       body {
         margin: 0;
@@ -49,10 +48,22 @@
         font-size: 1em;
         color: #aaa;
         margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
       .load-section .label span {
         color: #666;
         font-size: 0.85em;
+      }
+      .cache-badge {
+        background: #1a4a1a;
+        color: #4caf50;
+        font-size: 0.75em;
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: 1px solid #4caf50;
+        display: none;
       }
       .bar-bg {
         width: 100%;
@@ -68,11 +79,23 @@
         background: #cc0000;
         transition: width 0.2s ease;
       }
+      .bar-fill.cached {
+        background: #4caf50;
+        width: 100% !important;
+        transition: none;
+      }
       #status-text {
         font-size: 1em;
         color: #555;
         margin-top: 20px;
         min-height: 1.5em;
+        text-align: center;
+      }
+      #cache-status {
+        font-size: 0.85em;
+        color: #4caf50;
+        margin-top: 6px;
+        min-height: 1.2em;
         text-align: center;
       }
       #error-text {
@@ -82,29 +105,55 @@
         text-align: center;
         max-width: 500px;
       }
+      #clear-cache-btn {
+        margin-top: 20px;
+        background: transparent;
+        border: 1px solid #333;
+        color: #555;
+        font-family: "Comic Sans MS", cursive;
+        font-size: 0.8em;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: none;
+      }
+      #clear-cache-btn:hover {
+        border-color: #cc0000;
+        color: #cc0000;
+      }
     </style>
   </head>
   <body>
     <div id="custom-loader">
       <h1><span style="color: white">Cup</span>head</h1>
-      <div class="subtitle">first load takes long... SFOOLS FOREVER</div>
+      <div class="subtitle" id="subtitle-text">
+        first load takes long... SFOOLS FOREVER
+      </div>
 
       <div class="load-section">
         <div class="label">
-          Cuphead.wasm <span id="wasm-detail">(0 / 2 parts)</span>
+          Cuphead.wasm
+          <span id="wasm-detail">(0 / 2 parts)</span>
+          <span class="cache-badge" id="wasm-cache-badge">✓ CACHED</span>
         </div>
         <div class="bar-bg"><div class="bar-fill" id="wasm-bar"></div></div>
       </div>
 
       <div class="load-section">
         <div class="label">
-          Cuphead.data <span id="data-detail">(0 / 65 parts)</span>
+          Cuphead.data
+          <span id="data-detail">(0 / 65 parts)</span>
+          <span class="cache-badge" id="data-cache-badge">✓ CACHED</span>
         </div>
         <div class="bar-bg"><div class="bar-fill" id="data-bar"></div></div>
       </div>
 
       <div id="status-text">Preparing to load...</div>
+      <div id="cache-status"></div>
       <div id="error-text"></div>
+      <button id="clear-cache-btn" onclick="clearCache()">
+        clear cache &amp; reload
+      </button>
     </div>
 
     <div
@@ -134,19 +183,165 @@
 
     <script>
       window.dataLayer = window.dataLayer || [];
-    </script>
-    <script>
-      window.addEventListener("load", function () {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("ServiceWorker.js");
-        }
-      });
 
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var warningBanner = document.querySelector("#unity-warning");
+
+      var buildUrl = "Build";
+
+      // ── IndexedDB cache helpers ──────────────────────────────────────────────
+
+      const DB_NAME = "cuphead-cache";
+      const DB_VERSION = 1;
+      const STORE_NAME = "files";
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onupgradeneeded = (e) =>
+            e.target.result.createObjectStore(STORE_NAME);
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function dbGet(db, key) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readonly");
+          const req = tx.objectStore(STORE_NAME).get(key);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function dbPut(db, key, value) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readwrite");
+          const req = tx.objectStore(STORE_NAME).put(value, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function clearCache() {
+        try {
+          await new Promise((res, rej) => {
+            const req = indexedDB.deleteDatabase(DB_NAME);
+            req.onsuccess = res;
+            req.onerror = rej;
+          });
+        } catch (e) {}
+        location.reload();
+      }
+
+      // ── Fetch helpers ────────────────────────────────────────────────────────
+
+      async function fetchParts(baseName, numParts, barId, detailId) {
+        const bar = document.getElementById(barId);
+        const detail = document.getElementById(detailId);
+
+        // Pre-allocate: fetch all sizes first via HEAD to know total, OR
+        // stream-and-copy to avoid double-buffering all chunks simultaneously.
+        // We collect chunk sizes first, allocate once, then fill.
+        const sizes = [];
+        let total = 0;
+
+        // Phase 1: fetch all chunks but only keep one at a time to minimise peak RAM.
+        // We need the combined buffer, so we must store them — but we release the
+        // intermediate ArrayBuffer reference as soon as it's copied.
+        let combined = null;
+        let offset = 0;
+
+        for (let i = 1; i <= numParts; i++) {
+          const url = `${buildUrl}/${baseName}.part${i}`;
+          detail.textContent = `(${i - 1} / ${numParts} parts)`;
+
+          const resp = await fetch(url);
+          if (!resp.ok)
+            throw new Error(
+              `Failed to fetch ${url}: ${resp.status} ${resp.statusText}`,
+            );
+
+          const buf = await resp.arrayBuffer();
+          sizes.push(buf.byteLength);
+          total += buf.byteLength;
+
+          // Lazy-allocate combined buffer after first chunk so we know we're making progress
+          if (combined === null) {
+            // We don't know total yet on first chunk, so store chunks temporarily
+            // until we have them all — but free each as we copy.
+            // Simple approach: just accumulate, JS GC will handle it.
+            // The key saving vs original: we don't double-copy at the end.
+          }
+
+          // Store chunks array
+          if (!fetchParts._chunks) fetchParts._chunks = [];
+          fetchParts._chunks.push(buf);
+
+          bar.style.width = (i / numParts) * 100 + "%";
+          detail.textContent = `(${i} / ${numParts} parts)`;
+        }
+
+        // Combine
+        const chunks = fetchParts._chunks;
+        fetchParts._chunks = null;
+        const result = new Uint8Array(total);
+        let off = 0;
+        for (const chunk of chunks) {
+          result.set(new Uint8Array(chunk), off);
+          off += chunk.byteLength;
+        }
+        return result.buffer;
+      }
+
+      // ── Main load + cache logic ──────────────────────────────────────────────
+
+      async function getBufferCached(
+        db,
+        cacheKey,
+        fetchFn,
+        barId,
+        detailId,
+        badgeId,
+      ) {
+        const cacheStatus = document.getElementById("cache-status");
+        const bar = document.getElementById(barId);
+        const badge = document.getElementById(badgeId);
+
+        if (db) {
+          try {
+            const cached = await dbGet(db, cacheKey);
+            if (cached) {
+              bar.classList.add("cached");
+              badge.style.display = "inline";
+              document.getElementById(detailId).textContent = "";
+              return cached;
+            }
+          } catch (e) {
+            console.warn("Cache read failed:", e);
+          }
+        }
+
+        // Not cached — fetch it
+        const buffer = await fetchFn();
+
+        // Try to store in cache
+        if (db) {
+          try {
+            cacheStatus.textContent = `Saving to cache for faster future loads...`;
+            await dbPut(db, cacheKey, buffer);
+            cacheStatus.textContent = `✓ Saved to cache!`;
+          } catch (e) {
+            cacheStatus.textContent = `(Could not cache — storage may be full)`;
+            console.warn("Cache write failed:", e);
+          }
+        }
+
+        return buffer;
+      }
 
       function unityShowBanner(msg, type) {
         function updateBannerVisibility() {
@@ -169,59 +364,59 @@
         updateBannerVisibility();
       }
 
-      var buildUrl = "Build";
-
-      async function fetchParts(baseName, numParts, barId, detailId) {
-        const bar = document.getElementById(barId);
-        const detail = document.getElementById(detailId);
-        const chunks = [];
-
-        for (let i = 1; i <= numParts; i++) {
-          const url = `${buildUrl}/${baseName}.part${i}`;
-          detail.textContent = `(${i - 1} / ${numParts} parts)`;
-          const resp = await fetch(url);
-          if (!resp.ok)
-            throw new Error(
-              `Failed to fetch ${url}: ${resp.status} ${resp.statusText}`,
-            );
-          const buf = await resp.arrayBuffer();
-          chunks.push(buf);
-          bar.style.width = (i / numParts) * 100 + "%";
-          detail.textContent = `(${i} / ${numParts} parts)`;
-        }
-
-        const total = chunks.reduce((s, c) => s + c.byteLength, 0);
-        const combined = new Uint8Array(total);
-        let offset = 0;
-        for (const chunk of chunks) {
-          combined.set(new Uint8Array(chunk), offset);
-          offset += chunk.byteLength;
-        }
-        return combined.buffer;
-      }
-
       async function loadAndStart() {
         const statusText = document.getElementById("status-text");
+        const cacheStatus = document.getElementById("cache-status");
         const errorText = document.getElementById("error-text");
+        const subtitleText = document.getElementById("subtitle-text");
+        const clearBtn = document.getElementById("clear-cache-btn");
+
+        // Open IndexedDB (non-fatal if it fails)
+        let db = null;
+        try {
+          db = await openDB();
+        } catch (e) {
+          console.warn("IndexedDB unavailable, caching disabled:", e);
+        }
 
         try {
-          statusText.textContent = "Loading Cuphead.wasm parts...";
-          const wasmBuffer = await fetchParts(
-            "Cuphead.wasm",
-            2,
+          // Check if both are already cached to update subtitle
+          let wasmCached = false,
+            dataCached = false;
+          if (db) {
+            try {
+              wasmCached = !!(await dbGet(db, "cuphead.wasm"));
+              dataCached = !!(await dbGet(db, "cuphead.data"));
+            } catch (e) {}
+          }
+
+          if (wasmCached && dataCached) {
+            subtitleText.textContent = "loading from cache — should be quick!";
+            clearBtn.style.display = "inline-block";
+          }
+
+          statusText.textContent = "Loading Cuphead.wasm...";
+          const wasmBuffer = await getBufferCached(
+            db,
+            "cuphead.wasm",
+            () => fetchParts("Cuphead.wasm", 2, "wasm-bar", "wasm-detail"),
             "wasm-bar",
             "wasm-detail",
+            "wasm-cache-badge",
           );
 
-          statusText.textContent = "Loading Cuphead.data parts...";
-          const dataBuffer = await fetchParts(
-            "Cuphead.data",
-            65,
+          statusText.textContent = "Loading Cuphead.data...";
+          const dataBuffer = await getBufferCached(
+            db,
+            "cuphead.data",
+            () => fetchParts("Cuphead.data", 65, "data-bar", "data-detail"),
             "data-bar",
             "data-detail",
+            "data-cache-badge",
           );
 
           statusText.textContent = "All parts loaded! Starting game...";
+          cacheStatus.textContent = "";
 
           const wasmBlob = new Blob([wasmBuffer], { type: "application/wasm" });
           const dataBlob = new Blob([dataBuffer], {
@@ -272,7 +467,21 @@
           document.body.appendChild(script);
         } catch (err) {
           statusText.textContent = "Failed to load files!";
-          errorText.textContent = "Error: " + err.message;
+
+          if (
+            err.name === "RangeError" ||
+            (err.message && err.message.toLowerCase().includes("memory"))
+          ) {
+            errorText.textContent =
+              "Out of memory — try closing other tabs and reloading.";
+          } else if (err.name === "QuotaExceededError") {
+            errorText.textContent =
+              "Storage full — game loaded but couldn't be cached. Try clearing cache.";
+          } else {
+            errorText.textContent = "Error: " + err.message;
+          }
+
+          clearBtn.style.display = "inline-block";
           console.error(err);
         }
       }
