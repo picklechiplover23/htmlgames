@@ -1,5 +1,9 @@
 {
-  "version": "0.5.2",
-  "tip": "updated ultrakill with fraud soon, same for bendy ink machine and insomnia soon...",
-  "list": ["added cuphead", "added 3+ games"]
+  "version": "0.5.3",
+  "tip": "lightspeed patched a exploit i was gonna release :( auto update next update",
+  "list": [
+    "updated bendys inc machine (all chapters)",
+    "fixed cuphead crashing (hopefully)",
+    "added 9+ games"
+  ]
 }
