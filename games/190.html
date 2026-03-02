@@ -1,0 +1,87 @@
+<!-- Ultimate Game Stash file-->
+<!-- For the regularly updating doc go to https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/ -->
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pixel Speedrun</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
+    />
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-MENBM6GSNY"
+    ></script>
+    <script>
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      ((window.dataLayer = window.dataLayer || []),
+        gtag("js", new Date()),
+        gtag("config", "G-MENBM6GSNY"));
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/bubbls/ruffle@3d38aac19b0b44b1f3327561b05949b8a023d5c2/stylep.css"
+      type="text/css"
+    />
+  </head>
+  <body>
+    <div id="fb-root"></div>
+    <noscript>
+      <div id="notSupportedWrap">
+        <h2 id="notSupportedTitle">This content requires JavaScript</h2>
+        <p class="notSupportedMessage">
+          JavaScript appears to be disabled. Please enable it to view this
+          content.
+        </p>
+      </div>
+    </noscript>
+    <script>
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "F12") {
+          e.preventDefault();
+        }
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/bubbls/ruffle@3d38aac19b0b44b1f3327561b05949b8a023d5c2/sup.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/gh/bubbls/ruffle@3d38aac19b0b44b1f3327561b05949b8a023d5c2/offp.js"
+      type="module"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/gh/bubbls/ruffle@3d38aac19b0b44b1f3327561b05949b8a023d5c2/mainb.js"
+      type="module"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/gh/bubbls/ruffle@3d38aac19b0b44b1f3327561b05949b8a023d5c2/regis.js"
+      type="module"
+    ></script>
+
+    <script>
+      class FakeWorker {
+        constructor() {
+          this.onmessage = null;
+        }
+
+        postMessage(msg) {
+          console.warn("FakeWorker received message:", msg);
+        }
+
+        terminate() {}
+      }
+
+      window.RufflePlayer = window.RufflePlayer || {};
+      window.RufflePlayer.config = {
+        worker: false,
+      };
+
+      // Only override Worker if runtime tries to use it
+      if (typeof window.Worker !== "undefined") {
+        window.Worker = FakeWorker;
+      }
+    </script>
+  </body>
+</html>
