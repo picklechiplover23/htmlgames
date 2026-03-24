@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-PXHK7Q7G3Z"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-PXHK7Q7G3Z");
+    </script>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Unity Web Player | Hollow Knight SilkSong</title>
+    <link
+      rel="shortcut icon"
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/silkyboy@main/TemplateData/favicon.ico"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/silkyboy@main/TemplateData/style.css"
+    />
+    <link
+      rel="manifest"
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/silkyboy@main/manifest.webmanifest"
+    />
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"></div>
+    </div>
+
+    <script>
+      const SILKYBOY_BASE =
+        "https://cdn.jsdelivr.net/gh/SomeRandomFella/silkyboy@main/";
+      const CHUNKS_BASE = SILKYBOY_BASE + "StreamingAssets/aa/bundles-split/";
+      const MANIFEST_URL =
+        SILKYBOY_BASE + "StreamingAssets/aa/split-manifest.json";
+      const BUNDLE_PATTERN = /StreamingAssets\/aa\/WebGL\/([^?#]+\.bundle)/;
+
+      // ── Manifest ─────────────────────────────────────────────────────────────
+      let _manifestPromise = null;
+      function getManifest() {
+        if (!_manifestPromise) {
+          _manifestPromise = fetch(MANIFEST_URL).then((r) => {
+            if (!r.ok) throw new Error("Manifest fetch failed: " + r.status);
+            return r.json();
+          });
+        }
+        return _manifestPromise;
+      }
+      // Pre-fetch manifest immediately so it is ready when Unity starts asking
+      getManifest().catch((e) =>
+        console.error("[BundleLoader] Manifest error:", e),
+      );
+
+      async function fetchBundleBytes(filename) {
+        const manifest = await getManifest();
+        const info = manifest[filename];
+
+        if (!info) {
+          // Not split — bundle should exist at its normal WebGL path on silkyboy
+          console.warn(
+            "[BundleLoader] Not in manifest, fetching directly:",
+            filename,
+          );
+          const r = await fetch(
+            SILKYBOY_BASE + "StreamingAssets/aa/WebGL/" + filename,
+          );
+          if (!r.ok) throw new Error("Direct fetch failed: " + r.status);
+          return new Uint8Array(await r.arrayBuffer());
+        }
+
+        if (!info.split) {
+          // Whole file lives in bundles-split as a single file
+          const r = await fetch(CHUNKS_BASE + filename);
+          if (!r.ok) throw new Error("Single-file fetch failed: " + r.status);
+          return new Uint8Array(await r.arrayBuffer());
+        }
+
+        // Reassemble from chunks
+        const chunkBuffers = await Promise.all(
+          info.chunks.map(async (chunkName) => {
+            const r = await fetch(CHUNKS_BASE + chunkName);
+            if (!r.ok)
+              throw new Error(
+                "Chunk fetch failed: " + chunkName + " " + r.status,
+              );
+            return new Uint8Array(await r.arrayBuffer());
+          }),
+        );
+
+        const merged = new Uint8Array(info.size);
+        let offset = 0;
+        for (const chunk of chunkBuffers) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+        return merged;
+      }
+
+      // ── Intercept fetch (w-pt.loader.js cachedFetch path) ────────────────────
+      const _originalFetch = window.fetch.bind(window);
+      window.fetch = async function (input, init) {
+        const url =
+          typeof input === "string" ? input : (input && input.url) || "";
+        const match = url.match(BUNDLE_PATTERN);
+        if (!match) return _originalFetch(input, init);
+
+        const filename = decodeURIComponent(match[1]);
+        console.log("[BundleLoader fetch] →", filename);
+        try {
+          const bytes = await fetchBundleBytes(filename);
+          console.log(
+            "[BundleLoader fetch] ✅",
+            filename,
+            (bytes.byteLength / 1024 / 1024).toFixed(2) + " MB",
+          );
+          return new Response(
+            bytes.buffer.slice(
+              bytes.byteOffset,
+              bytes.byteOffset + bytes.byteLength,
+            ),
+            {
+              status: 200,
+              statusText: "OK",
+              headers: {
+                "Content-Type": "application/octet-stream",
+                "Content-Length": String(bytes.byteLength),
+              },
+            },
+          );
+        } catch (err) {
+          console.error("[BundleLoader fetch] ❌", filename, err);
+          return _originalFetch(input, init);
+        }
+      };
+
+      // ── Intercept XMLHttpRequest via Proxy constructor ────────────────────────
+      // Unity's _JS_WebRequest_Send creates XHRs from inside the wasm→JS bridge.
+      // Replacing window.XMLHttpRequest with a Proxy constructor means every
+      // new XMLHttpRequest() anywhere gets intercepted before it can fire.
+
+      const _OriginalXHR = window.XMLHttpRequest;
+
+      function InterceptedXHR() {
+        const real = new _OriginalXHR();
+
+        let _url = "";
+        let _method = "GET";
+        let _isBundleReq = false;
+        let _fakeStatus = 0;
+        let _fakeReadyState = 0;
+        let _fakeResponse = null;
+
+        const proxy = new Proxy(real, {
+          get(target, prop) {
+            // Return fake values once we have a completed bundle response
+            if (_isBundleReq && _fakeStatus !== 0) {
+              if (prop === "status") return _fakeStatus;
+              if (prop === "statusText")
+                return _fakeStatus === 200 ? "OK" : "Not Found";
+              if (prop === "readyState") return _fakeReadyState;
+              if (prop === "response") return _fakeResponse;
+              if (prop === "responseType") return "arraybuffer";
+              if (prop === "responseURL") return _url;
+            }
+            if (_isBundleReq && prop === "readyState") return _fakeReadyState;
+
+            const value = target[prop];
+
+            // ── open ──────────────────────────────────────────────────────────
+            if (prop === "open") {
+              return function (method, url, ...rest) {
+                _url = url || "";
+                _method = method || "GET";
+                _isBundleReq = BUNDLE_PATTERN.test(_url);
+                if (_isBundleReq) {
+                  console.log("[BundleLoader XHR] open intercepted:", _url);
+                  _fakeReadyState = 1; // OPENED — do NOT call real open
+                  return;
+                }
+                return target.open.call(target, method, url, ...rest);
+              };
+            }
+
+            // ── send ──────────────────────────────────────────────────────────
+            if (prop === "send") {
+              return function (body) {
+                if (!_isBundleReq) return target.send.call(target, body);
+
+                const filename = decodeURIComponent(
+                  _url.match(BUNDLE_PATTERN)[1],
+                );
+                console.log("[BundleLoader XHR] fetching:", filename);
+
+                function fireEvent(type, eventInit) {
+                  try {
+                    const e = eventInit
+                      ? new ProgressEvent(type, eventInit)
+                      : new Event(type);
+                    const handler = proxy["on" + type];
+                    if (typeof handler === "function") handler(e);
+                    target.dispatchEvent(e);
+                  } catch (_) {}
+                }
+
+                fetchBundleBytes(filename)
+                  .then((bytes) => {
+                    console.log(
+                      "[BundleLoader XHR] ✅",
+                      filename,
+                      (bytes.byteLength / 1024 / 1024).toFixed(2) + " MB",
+                    );
+
+                    _fakeStatus = 200;
+                    _fakeResponse = bytes.buffer.slice(
+                      bytes.byteOffset,
+                      bytes.byteOffset + bytes.byteLength,
+                    );
+
+                    _fakeReadyState = 2;
+                    fireEvent("readystatechange");
+                    _fakeReadyState = 3;
+                    fireEvent("readystatechange");
+                    _fakeReadyState = 4;
+                    fireEvent("readystatechange");
+
+                    const sz = {
+                      lengthComputable: true,
+                      loaded: bytes.byteLength,
+                      total: bytes.byteLength,
+                    };
+                    fireEvent("load", sz);
+                    fireEvent("loadend", sz);
+                  })
+                  .catch((err) => {
+                    console.error("[BundleLoader XHR] ❌", filename, err);
+                    _fakeStatus = 404;
+                    _fakeReadyState = 4;
+                    fireEvent("readystatechange");
+                    fireEvent("error", {
+                      lengthComputable: false,
+                      loaded: 0,
+                      total: 0,
+                    });
+                    fireEvent("loadend", {
+                      lengthComputable: false,
+                      loaded: 0,
+                      total: 0,
+                    });
+                  });
+              };
+            }
+
+            // ── setRequestHeader / abort — no-op for bundle requests ──────────
+            if (prop === "setRequestHeader") {
+              return function (h, v) {
+                if (_isBundleReq) return;
+                return target.setRequestHeader.call(target, h, v);
+              };
+            }
+            if (prop === "abort") {
+              return function () {
+                if (_isBundleReq) return;
+                return target.abort.call(target);
+              };
+            }
+
+            if (typeof value === "function") return value.bind(target);
+            return value;
+          },
+
+          set(target, prop, value) {
+            target[prop] = value;
+            return true;
+          },
+        });
+
+        return proxy;
+      }
+
+      InterceptedXHR.prototype = _OriginalXHR.prototype;
+      InterceptedXHR.UNSENT = 0;
+      InterceptedXHR.OPENED = 1;
+      InterceptedXHR.HEADERS_RECEIVED = 2;
+      InterceptedXHR.LOADING = 3;
+      InterceptedXHR.DONE = 4;
+      window.XMLHttpRequest = InterceptedXHR;
+
+      // ── Unity boilerplate ─────────────────────────────────────────────────────
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length
+            ? "block"
+            : "none";
+        }
+        var div = document.createElement("div");
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == "error") {
+          div.style = "background: red; padding: 10px;";
+        } else {
+          if (type == "warning")
+            div.style = "background: yellow; padding: 10px;";
+          setTimeout(function () {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = SILKYBOY_BASE + "Build";
+      var loaderUrl = buildUrl + "/w-pt.loader.js";
+
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/w-pt.data.unityweb",
+        frameworkUrl: buildUrl + "/w-pt.framework.js.unityweb",
+        codeUrl: buildUrl + "/w-pt.wasm.unityweb",
+        streamingAssetsUrl: SILKYBOY_BASE + "StreamingAssets",
+        companyName: "EDUrocks Group, Truffled, GN-Math",
+        productName: "Hollow Knight SilkSong",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        var meta = document.createElement("meta");
+        meta.name = "viewport";
+        meta.content =
+          "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+        document.getElementsByTagName("head")[0].appendChild(meta);
+      }
+
+      loadingBar.style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        })
+          .then(() => {
+            loadingBar.style.display = "none";
+          })
+          .catch((message) => {
+            alert(message);
+          });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
