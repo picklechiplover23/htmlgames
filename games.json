@@ -831,6 +831,62 @@
     {
       "id": 199,
       "name": "Hollow Knight: Silksong"
+    },
+    {
+      "id": 200,
+      "name": "Brawl Simulator 3D"
+    }
+  ],
+  "9": [
+    {
+      "id": 201,
+      "name": "Dadish 2"
+    },
+    {
+      "id": 202,
+      "name": "Dadish 3"
+    },
+    {
+      "id": 203,
+      "name": "Dadish 3D"
+    },
+    {
+      "id": 204,
+      "name": "Fire Emblem (ANCIENT version)"
+    },
+    {
+      "id": 205,
+      "name": "Boil Noodles at Night"
+    },
+    {
+      "id": 206,
+      "name": "Minesweeper Plus"
+    },
+    {
+      "id": 207,
+      "name": "Pokemon Emerald"
+    },
+    {
+      "id": 208,
+      "name": "Royal Towers TDS"
+    },
+    {
+      "id": 209,
+      "name": "Netenyahu's Big Heist"
+    },
+    {
+      "id": 210,
+      "name": "Super Mario Bros"
+    }
+  ],
+  "10": [
+    {
+      "id": 211,
+      "name": "Ultrapool"
+    },
+    {
+      "id": 212,
+      "name": "Upstream"
     }
   ]
 }
