@@ -355,6 +355,10 @@ progress::-webkit-progress-bar {
   z-index: -1;
 }
 
+#root {
+  position: relative;
+  z-index: 1;
+}
 .forum-button {
   position: fixed;
   bottom: 0;
