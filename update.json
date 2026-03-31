@@ -1,5 +1,12 @@
 {
-  "version": "0.6.2",
-  "tip": "added like 15+ games",
-  "list": ["added 15+ games", "ADDED UNDERTALLE", "fixed page issue", "fixed boil noodles at nigght"]
+  "version": "0.7.0",
+  "tip": "VERSIONS 0.7.0+ NOW HAVE FULL AUTO UPDATE PLEASE I URGE YOU GET TO YOUR HANDS ON 0.7.0 FOR FULL AUTO UPDATING! AS CURRENT AUTO UPDATING ONLY  AUTO UPDATES GAMES SO PLS UPDATE TO 0.7.0",
+  "list": [
+    "added full auto updating (update to version 0.7.0 for this)",
+    "fixed eruda initalization bugs",
+    "fixed weird visual bugs with the globe",
+    "small code refactor, gonna have to do more soon cause shiity code no good ✌️",
+    "added reccomendation forum button",
+    "added save states to fire emblem "
+  ]
 }
