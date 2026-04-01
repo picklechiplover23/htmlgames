@@ -522,6 +522,8 @@ function addUIElements() {
   });
 }
 
+function addAprilFools() {}
+
 function log(text, type) {
   const consoleText = document.createElement("pre");
   consoleText.textContent = text;
@@ -622,18 +624,23 @@ async function loadJSON() {
     const data = await response.json();
     return data;
   } catch (err) {
-    throw new Error(`Failed to load games: ${err.message}`);
+    throw new Error(`failed to load games: ${err.message}`);
   }
 }
 
 async function loadGame(id) {
   try {
-    const response = await fetch(`${rootLink}games/${id}.html`);
+    const response = await fetch(
+      `${rootLink}games/${id}.html?v=${Date.now()}`,
+      {
+        cache: "no-store",
+      },
+    );
     if (!response.ok) throw new Error("network error");
     const data = await response.text();
     return data;
   } catch (err) {
-    throw new Error(`Failed to load game: ${err.message}`);
+    throw new Error(`failed to load game: ${err.message}`);
   }
 }
 
