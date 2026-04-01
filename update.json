@@ -1,12 +1,10 @@
 {
-  "version": "0.7.0",
-  "tip": "VERSIONS 0.7.0+ NOW HAVE FULL AUTO UPDATE PLEASE I URGE YOU GET TO YOUR HANDS ON 0.7.0 FOR FULL AUTO UPDATING! AS CURRENT AUTO UPDATING ONLY  AUTO UPDATES GAMES SO PLS UPDATE TO 0.7.0",
+  "version": "0.7.1",
+  "tip": "happy april sfools day, should I rework UI to make it more like a website or is terminal tuff? (tell me)",
   "list": [
-    "added full auto updating (update to version 0.7.0 for this)",
-    "fixed eruda initalization bugs",
-    "fixed weird visual bugs with the globe",
-    "small code refactor, gonna have to do more soon cause shiity code no good ✌️",
-    "added reccomendation forum button",
-    "added save states to fire emblem "
+    "fixed cacheing issue on games",
+    "added 8+ games",
+    "added NUMBYS NUMBER FACTORY!",
+    "added some april sfools easter eggs :) (if ur not on 0.7.0+ auto updating you wont see it)"
   ]
 }
