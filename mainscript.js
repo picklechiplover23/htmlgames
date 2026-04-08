@@ -1,5 +1,6 @@
 let CURRENT_VERSION;
 let offlineMode;
+let viewJSON;
 const lastUpdateLog = localStorage.getItem("update-log");
 const root = document.getElementById("root");
 const updateLog = document.getElementById("update-log");
@@ -58,8 +59,8 @@ function actuallyLaunch() {
   loadIntoWindow();
 }
 
-async function showUpdateMenu(latestVersion) {
-  if (!lastUpdateLog || lastUpdateLog !== latestVersion) {
+async function showUpdateMenu(latestVersion, force = false) {
+  if (force || !lastUpdateLog || lastUpdateLog !== latestVersion) {
     const updateAlert = document.createElement("dialog");
     updateAlert.classList.add("update-log");
 
@@ -171,7 +172,7 @@ help <command> - shows the list of commands or can help with certain commands
 imreallydumb - for a toddler level guide
 cd <dir> - navigate to a section (e.g cd games)
 ls <page> - see all the current files in the dir and use pages for dirs with lots of files (do ls all to see all for games)
-sort <abc or id> - changes how ls command sorts stuff by either alphabetically or numbered with id
+sort <abc or id> - changes how ls command sorts stuff by either alphabetically or numbered with id or views (sort abc, sort id or sort views)
 cloak - cloaks the tab
 game - open HTML5 games by numbered id
 cat - open files
@@ -273,13 +274,16 @@ all dirs:
       });
   },
 
-  ls: (args) => {
+  ls: async (args) => {
     const currentFiles = files[currentDir];
     if (currentDir === "games") {
       loadJSON()
-        .then((stuff) => {
+        .then(async (stuff) => {
           const gameDiv = document.createElement("div");
           gameDiv.classList.add("games");
+
+          await getViews();
+          console.log(viewJSON);
 
           gameDiv.innerHTML = `
                               <div class="header">
@@ -299,6 +303,10 @@ all dirs:
               gays = allGames.sort((a, b) => a.name.localeCompare(b.name));
             } else if (sorting === "id") {
               gays = allGames.sort((a, b) => a.id - b.id);
+            } else if (sorting === "views") {
+              gays = allGames.sort(
+                (a, b) => getViewsForGame(b.id) - getViewsForGame(a.id),
+              );
             }
 
             gays.forEach((gay) => {
@@ -307,7 +315,10 @@ all dirs:
 
               gameidfk.innerHTML = `
                             <p class="id">${gay.id}</p>
+                            <div class="right-ls">
                             <p>${gay.name}</p>
+                            <p class="views">views: ${getViewsForGame(gay.id)}</p>
+                            </div>
                           `;
 
               gameidfk.addEventListener("click", () => {
@@ -329,6 +340,10 @@ all dirs:
               );
             } else if (sorting === "id") {
               sortedGames = stuff[currentPage].sort((a, b) => a.id - b.id);
+            } else if (sorting === "views") {
+              sortedGames = stuff[currentPage].sort(
+                (a, b) => getViewsForGame(b.id) - getViewsForGame(a.id),
+              );
             }
             sortedGames.forEach((game) => {
               const gameidfk = document.createElement("div");
@@ -435,7 +450,11 @@ all dirs:
   sort: (args) => {
     const whatYouTyped = args[0];
 
-    if (whatYouTyped === "abc" || whatYouTyped === "id") {
+    if (
+      whatYouTyped === "abc" ||
+      whatYouTyped === "id" ||
+      whatYouTyped === "views"
+    ) {
       sorting = whatYouTyped;
       log("succesfully changed sorting", "info");
       loadTyper();
@@ -506,6 +525,26 @@ function init(versionCheck) {
   }, 700);
 }
 
+async function getViews() {
+  if (!viewJSON) {
+    const res = await fetch(
+      `https://data.jsdelivr.com/v1/package/gh/picklechiplover23/htmlgames@master/stats?v=${Date.now()}`,
+      {
+        cache: "no-store",
+      },
+    );
+    const data = await res.json();
+    viewJSON = data.files;
+  } else {
+    return;
+  }
+}
+
+function getViewsForGame(id) {
+  if (!viewJSON) return 0;
+  return viewJSON[`/games/${id}.html`]?.total ?? 0;
+}
+
 function addUIElements() {
   const button = document.createElement("button");
   button.classList.add("forum-button");
@@ -519,6 +558,17 @@ function addUIElements() {
       "https://docs.google.com/forms/d/e/1FAIpQLSetcNAFkZMXlVZ9MCik9xGfTDwzhjtwP88WjLdH55BY4bqb9g/viewform?usp=publish-editor",
       "_blank",
     );
+  });
+
+  const button2 = document.createElement("button");
+  button2.classList.add("button-log");
+
+  button2.textContent = "show update log";
+
+  document.querySelector("body").appendChild(button2);
+
+  button2.addEventListener("click", () => {
+    showUpdateMenu(CURRENT_VERSION, true);
   });
 }
 
