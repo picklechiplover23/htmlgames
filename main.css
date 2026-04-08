@@ -145,13 +145,13 @@ p {
 
 .game {
   display: flex;
-  align-items: center;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .game * {
   margin: 0;
   padding: 5px;
-  border-bottom: 1px solid white;
   width: 100%;
   cursor: pointer;
 }
@@ -172,8 +172,11 @@ p {
 .id {
   display: flex;
   justify-content: center;
+  align-items: center;
   border-right: 1px solid white;
+  border-bottom: 1px solid white;
   width: 30px;
+  min-width: 30px;
 }
 
 .update-log {
@@ -374,6 +377,39 @@ progress::-webkit-progress-bar {
 }
 
 .forum-button:hover {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+}
+
+.right-ls {
+  display: flex;
+  border-bottom: 1px solid white;
+  gap: 5px;
+}
+
+.views {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0.6;
+  font-size: 0.7em;
+}
+
+.button-log {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 9999;
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+  margin-bottom: 20px;
+  margin-right: calc(20px + 20px + 140px);
+  padding: 10px;
+  cursor: pointer;
+}
+
+.button-log:hover {
   background-color: white;
   color: black;
   border: 1px solid black;
