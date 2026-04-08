@@ -1,10 +1,10 @@
 {
-  "version": "0.7.1",
-  "tip": "happy april sfools day, should I rework UI to make it more like a website or is terminal tuff? (tell me)",
+  "version": "0.8.0",
+  "tip": "guys give me some reccomendations, click reports & issues (also if u know js, css, html or c# hmu)",
   "list": [
-    "fixed cacheing issue on games",
-    "added 8+ games",
-    "added NUMBYS NUMBER FACTORY!",
-    "added some april sfools easter eggs :) (if ur not on 0.7.0+ auto updating you wont see it)"
+    "ADDED STARDEW VALLEY",
+    "added some other games",
+    "ADDED NEW SORTING do sort views to list games based off views",
+    "added view shower"
   ]
 }
