@@ -1,10 +1,9 @@
 {
-  "version": "0.8.0",
-  "tip": "guys give me some reccomendations, click reports & issues (also if u know js, css, html or c# hmu)",
+  "version": "0.8.1",
+  "tip": "hi guys! small update today, spotify proress going great maybe finished by next monday if i lock in duringg weekend dont forget to donate",
   "list": [
-    "ADDED STARDEW VALLEY",
-    "added some other games",
-    "ADDED NEW SORTING do sort views to list games based off views",
-    "added view shower"
+    "fixed stardew valley memory issues, audio/music and auto saving should work now",
+    "fixed 10 minutes till dawn",
+    "brotato updated with latest update and new DLC"
   ]
 }
