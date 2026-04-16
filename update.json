@@ -1,5 +1,9 @@
 {
-  "version": "0.8.2",
-  "tip": "small game additon SPOTIFY IS ALMOST FINISHED, i just want it to be perfect tmrw releasing most likely tell me albums you want on it",
-  "list": ["added 3+ games", "English EOC+", "does anyone actually read these?"]
+  "version": "1.0.0",
+  "tip": "FULL VERSION OUT!!",
+  "list": [
+    "added spotify",
+    "added bypasser for auto tab closing (stahmer patch)",
+    "added plague inc"
+  ]
 }
