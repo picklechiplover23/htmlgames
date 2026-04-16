@@ -411,6 +411,142 @@ progress::-webkit-progress-bar {
 
 .button-log:hover {
   background-color: white;
-  color: black;
+  color: black !important;
   border: 1px solid black;
 }
+
+.button-general {
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+}
+
+.button-log.button-general:hover * {
+  color: black !important;
+}
+
+.bypasser {
+  margin-right: calc(60px + 60px + 200px) !important;
+}
+
+.showerfalse {
+  color: red;
+}
+
+.showertrue {
+  color: rgb(28, 216, 28);
+  font-weight: bold;
+}
+
+.spotify {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-right: calc(80px + 80px + 270px) !important;
+}
+
+.spotify img {
+  width: 38px;
+  height: 38px;
+}
+
+/* .chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color, #333);
+  margin-bottom: 8px;
+}
+
+.chat-room-title {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--info-color, #0f0);
+}
+
+.chat-room-meta {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.chat-leave-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid currentColor;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.chat-leave-btn:hover {
+  opacity: 1;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 8px;
+  max-height: calc(100vh - 120px);
+}
+
+.chat-msg {
+  margin: 2px 0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-ts {
+  opacity: 0.45;
+  font-size: 0.8rem;
+}
+
+.chat-author {
+  color: var(--info-color, #0f0);
+  font-weight: bold;
+}
+
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color, #333);
+  font-family: inherit;
+}
+
+.chat-prompt {
+  color: var(--info-color, #0f0);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chat-input-text {
+  min-width: 2px;
+}
+
+.chat-system {
+  opacity: 0.4;
+  text-align: center;
+  font-size: 0.8em;
+  margin: 4px 0;
+}
+
+.right-ls {
+  border-bottom: 1px solid white;
+} */
