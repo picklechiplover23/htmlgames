@@ -1,6 +1,7 @@
 let CURRENT_VERSION;
 let offlineMode;
 let viewJSON;
+let bypassOn;
 const lastUpdateLog = localStorage.getItem("update-log");
 const root = document.getElementById("root");
 const updateLog = document.getElementById("update-log");
@@ -34,6 +35,34 @@ const launchListener = (e) => {
 };
 
 function actuallyLaunch() {
+  if (bypassOn) {
+    const overlay = document.createElement("div");
+    overlay.id = "bypass-overlay";
+    overlay.style.cssText =
+      "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "bypass-close";
+    closeBtn.style.cssText =
+      "position:fixed;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#000;color:#fff;font-size:18px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000;line-height:1;";
+    closeBtn.textContent = "×";
+
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "width:100%;height:100%;border:none;";
+    iframe.srcdoc = html;
+
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+    document.body.appendChild(closeBtn);
+
+    closeBtn.addEventListener("click", () => {
+      overlay.remove();
+      closeBtn.remove();
+    });
+
+    return;
+  }
+
   const gameWindow = window.open("", "_blank");
   if (!gameWindow) return;
 
@@ -520,7 +549,7 @@ function init(versionCheck) {
         log("error: Failed to get latest version.", "error");
       }
     }
-    log("warn: this is a beta version, report issues to amir", "warn");
+    log("warn: report issues to amir", "warn");
     loadTyper();
   }, 700);
 }
@@ -569,6 +598,89 @@ function addUIElements() {
 
   button2.addEventListener("click", () => {
     showUpdateMenu(CURRENT_VERSION, true);
+  });
+
+  const button3 = document.createElement("button");
+  button3.classList.add("button-general");
+  button3.classList.add("bypasser");
+  button3.classList.add("button-log");
+
+  if (!bypassOn) {
+    button3.innerHTML = "<p>bypass: <span class='showerfalse'>off</span></p>";
+  } else {
+    button3.innerHTML = "<p>bypass: <span class='showertrue'>on</span></p>";
+  }
+
+  document.querySelector("body").appendChild(button3);
+
+  button3.addEventListener("click", () => {
+    if (bypassOn) {
+      bypassOn = false;
+      button3.innerHTML = "<p>bypass: <span class='showerfalse'>off</span></p>";
+      log("bypass disabled", "info");
+      loadTyper();
+    } else {
+      bypassOn = true;
+      button3.innerHTML = "<p>bypass: <span class='showertrue'>on</span></p>";
+      alert(
+        "fyi, bypasser is NOT reccomended for normal use, ONLY use if your tabs are being automatically closed (via stahmer patch)",
+      );
+      log("bypass enabled", "info");
+      loadTyper();
+    }
+  });
+
+  const button4 = document.createElement("button");
+  button4.classList.add("button-general");
+  button4.classList.add("button-log");
+  button4.classList.add("spotify");
+
+  button4.innerHTML = `
+      <img src="logo.png"/>
+    `;
+
+  document.querySelector("body").appendChild(button4);
+
+  button4.addEventListener("click", async () => {
+    const res = await fetch(
+      "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/shittify21.html?v=" +
+        Date.now(),
+      {
+        cache: "no-store",
+      },
+    );
+    const pageHtml = await res.text();
+
+    if (bypassOn) {
+      const overlay = document.createElement("div");
+      overlay.id = "bypass-overlay";
+      overlay.style.cssText =
+        "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;";
+
+      const closeBtn = document.createElement("button");
+      closeBtn.style.cssText =
+        "position:fixed;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#000;color:#fff;font-size:18px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000;line-height:1;";
+      closeBtn.textContent = "×";
+
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "width:100%;height:100%;border:none;";
+      iframe.srcdoc = pageHtml;
+
+      overlay.appendChild(iframe);
+      document.body.appendChild(overlay);
+      document.body.appendChild(closeBtn);
+
+      closeBtn.addEventListener("click", () => {
+        overlay.remove();
+        closeBtn.remove();
+      });
+    } else {
+      const w = window.open("", "_blank");
+      if (!w) return;
+      w.document.open();
+      w.document.write(pageHtml);
+      w.document.close();
+    }
   });
 }
 
