@@ -1,9 +1,10 @@
 {
-  "version": "1.0.0",
-  "tip": "FULL VERSION OUT!!",
+  "version": "1.0.1",
+  "tip": "small hotfix, and i discovered something that could possibly bring A LOT of stuff to sfools",
   "list": [
-    "added spotify",
-    "added bypasser for auto tab closing (stahmer patch)",
-    "added plague inc"
+    "fixed shittify logo",
+    "fixed plague inc",
+    "fixed ls all being slow (js deliver api was down so i removed waiting)",
+    "added a lot of yalls song/album reccomendations to shittify"
   ]
 }
