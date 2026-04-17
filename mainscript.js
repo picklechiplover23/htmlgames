@@ -311,94 +311,91 @@ all dirs:
           const gameDiv = document.createElement("div");
           gameDiv.classList.add("games");
 
-          await getViews();
-          console.log(viewJSON);
-
           gameDiv.innerHTML = `
-                              <div class="header">
-                              <p>id</p>
-                              <p>name</p>
-                            </div>
-                            `;
+            <div class="header">
+              <p>id</p>
+              <p>name</p>
+            </div>
+          `;
 
           const pages = Object.keys(stuff).length;
           const currentPage = args[0] || 1;
 
+          const renderGame = (gameObj) => {
+            const gameidfk = document.createElement("div");
+            gameidfk.classList.add("game");
+
+            gameidfk.innerHTML = `
+              <p class="id">${gameObj.id}</p>
+              <div class="right-ls">
+                <p>${gameObj.name}</p>
+                <p class="views" id="views-${gameObj.id}">views: loading</p>
+              </div>
+            `;
+
+            gameidfk.addEventListener("click", () => {
+              loadGame(gameObj.id).then((gameHtml) => {
+                html = gameHtml;
+                actuallyLaunch();
+              });
+            });
+
+            return gameidfk;
+          };
+
+          const patchViews = () => {
+            const allGames = Object.values(stuff).flat();
+            allGames.forEach((game) => {
+              const el = document.getElementById(`views-${game.id}`);
+              if (el) el.textContent = `views: ${getViewsForGame(game.id)}`;
+            });
+          };
+
           if (args[0] === "all") {
             const allGames = Object.values(stuff).flat();
-            let gays;
-
-            if (sorting === "abc") {
-              gays = allGames.sort((a, b) => a.name.localeCompare(b.name));
-            } else if (sorting === "id") {
-              gays = allGames.sort((a, b) => a.id - b.id);
-            } else if (sorting === "views") {
-              gays = allGames.sort(
+            let sorted;
+            if (sorting === "abc")
+              sorted = allGames.sort((a, b) => a.name.localeCompare(b.name));
+            else if (sorting === "id")
+              sorted = allGames.sort((a, b) => a.id - b.id);
+            else if (sorting === "views")
+              sorted = allGames.sort(
                 (a, b) => getViewsForGame(b.id) - getViewsForGame(a.id),
               );
-            }
 
-            gays.forEach((gay) => {
-              const gameidfk = document.createElement("div");
-              gameidfk.classList.add("game");
-
-              gameidfk.innerHTML = `
-                            <p class="id">${gay.id}</p>
-                            <div class="right-ls">
-                            <p>${gay.name}</p>
-                            <p class="views">views: ${getViewsForGame(gay.id)}</p>
-                            </div>
-                          `;
-
-              gameidfk.addEventListener("click", () => {
-                loadGame(gay.id).then((gameHtml) => {
-                  html = gameHtml;
-                  actuallyLaunch();
-                });
-              });
-
-              gameDiv.appendChild(gameidfk);
-            });
+            sorted.forEach((game) => gameDiv.appendChild(renderGame(game)));
             root.appendChild(gameDiv);
           } else if (stuff[currentPage]) {
             let sortedGames;
-
-            if (sorting === "abc") {
+            if (sorting === "abc")
               sortedGames = stuff[currentPage].sort((a, b) =>
                 a.name.localeCompare(b.name),
               );
-            } else if (sorting === "id") {
+            else if (sorting === "id")
               sortedGames = stuff[currentPage].sort((a, b) => a.id - b.id);
-            } else if (sorting === "views") {
+            else if (sorting === "views")
               sortedGames = stuff[currentPage].sort(
                 (a, b) => getViewsForGame(b.id) - getViewsForGame(a.id),
               );
-            }
-            sortedGames.forEach((game) => {
-              const gameidfk = document.createElement("div");
-              gameidfk.classList.add("game");
 
-              gameidfk.innerHTML = `
-                            <p class="id">${game.id}</p>
-                            <p>${game.name}</p>
-                          `;
-
-              gameidfk.addEventListener("click", () => {
-                loadGame(game.id).then((gameHtml) => {
-                  html = gameHtml;
-                  actuallyLaunch();
-                });
-              });
-
-              gameDiv.appendChild(gameidfk);
-            });
-
+            sortedGames.forEach((game) =>
+              gameDiv.appendChild(renderGame(game)),
+            );
             root.appendChild(gameDiv);
             log(`(page ${currentPage} out of ${pages})`, "info");
           } else {
             log(`Page ${currentPage} not found`, "warn");
           }
+
           loadTyper();
+
+          if (!viewJSON) {
+            getViews()
+              .then(patchViews)
+              .catch(() => {});
+          } else {
+            patchViews();
+          }
         })
         .catch((err) => {
           log(`ERROR: ${err}`, "error");
@@ -530,6 +527,7 @@ function init(versionCheck) {
                                                     `);
     log('for list of commands type "help"', "info");
     addUIElements();
+
     if (versionCheck) {
       try {
         const res = await fetch(`${rootLink}version.txt`, {
@@ -556,12 +554,19 @@ function init(versionCheck) {
 
 async function getViews() {
   if (!viewJSON) {
-    const res = await fetch(
-      `https://data.jsdelivr.com/v1/package/gh/picklechiplover23/htmlgames@master/stats?v=${Date.now()}`,
-      {
-        cache: "no-store",
-      },
-    );
+    try {
+      const res = await fetch(
+        `https://data.jsdelivr.com/v1/package/gh/picklechiplover23/htmlgames@master/stats?v=${Date.now()}`,
+        {
+          cache: "no-store",
+        },
+      );
+    } catch (err) {
+      log(
+        "error: failed to get game views (DATA API not sfools fault)",
+        "error",
+      );
+    }
     const data = await res.json();
     viewJSON = data.files;
   } else {
@@ -571,7 +576,7 @@ async function getViews() {
 
 function getViewsForGame(id) {
   if (!viewJSON) return 0;
-  return viewJSON[`/games/${id}.html`]?.total ?? 0;
+  return viewJSON[`/games/${id}.html`]?.total ?? "error";
 }
 
 function addUIElements() {
@@ -636,7 +641,7 @@ function addUIElements() {
   button4.classList.add("spotify");
 
   button4.innerHTML = `
-      <img src="logo.png"/>
+      <img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png"/>
     `;
 
   document.querySelector("body").appendChild(button4);
