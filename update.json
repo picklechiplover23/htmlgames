@@ -1,10 +1,8 @@
 {
-  "version": "1.0.1",
-  "tip": "small hotfix, and i discovered something that could possibly bring A LOT of stuff to sfools",
+  "version": "1.0.2",
+  "tip": "reccomend more songs for shittify",
   "list": [
-    "fixed shittify logo",
-    "fixed plague inc",
-    "fixed ls all being slow (js deliver api was down so i removed waiting)",
-    "added a lot of yalls song/album reccomendations to shittify"
+    "added a bunch of shittify albums/songgs",
+    "fixed main bug in plague inc"
   ]
 }
