@@ -2,8 +2,8 @@
 <html lang="en-us">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <!-- base href="https://cdn.jsdelivr.net/gh/Reeyuki/PlagueIncEvolved/" -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <base href="https://cdn.jsdelivr.net/gh/Reeyuki/PlagueIncEvolved/" />
     <title>Plague Inc</title>
 
     <style>
@@ -51,13 +51,15 @@
 
   <body>
     <div id="loader">
-      <div id="text">35.8 MB / 317 MB</div>
-      <div id="bar"><div id="fill" style="width: 11.3%"></div></div>
+      <div id="text">0 MB / 300 MB</div>
+      <div id="bar">
+        <div id="fill"></div>
+      </div>
     </div>
 
     <canvas id="unity-canvas"></canvas>
 
-    <script src="https://cdn.jsdelivr.net/gh/Reeyuki/PlagueIncEvolved/Build/bb0d9ecdb05db3e84da20bd14a4f84dc.loader.js"></script>
+    <script src="Build/bb0d9ecdb05db3e84da20bd14a4f84dc.loader.js"></script>
 
     <script>
       const baseBuild =
@@ -87,8 +89,8 @@
 
       /* CONFIG ONLY */
       const files = [
-        { name: "1605eb800a276784e4a31d7e08c292ca.wasm", parts: 2 },
-        { name: "c68552511e0497caf31a2ee65f4f53e3.data", parts: 15 },
+        { name: "6b69ec426bff8a6bd4e760a1d5f507b9.wasm", parts: 2 },
+        { name: "3719aa6c33bf126ed64864ee5fc2fafc.data", parts: 15 },
       ];
 
       function buildUrls(file) {
@@ -139,7 +141,7 @@
         createUnityInstance(document.querySelector("#unity-canvas"), {
           dataUrl: dataUrl,
           frameworkUrl:
-            baseBuild + "34cbf55c105d3d6cb061777c1afc3ae2.framework.js",
+            baseBuild + "b4b58f3ff6d98fbfb83482e25e0e9a5c.framework.js",
           codeUrl: wasmUrl,
           streamingAssetsUrl: base + "StreamingAssets",
           companyName: "Ndemic Creations",
