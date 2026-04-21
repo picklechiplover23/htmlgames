@@ -1,0 +1,171 @@
+<html>
+  <head>
+    <base
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips@master/fireemblem2/"
+    />
+    <script src="//www.google.com/jsapi"></script>
+
+    <style>
+      body {
+        overflow: hidden;
+        background: #000000;
+        margin-top: 0;
+        margin-left: 0;
+        color: #000000;
+      }
+
+      #startButton {
+        display: block;
+        width: 160px;
+        height: 40px;
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+        margin: 20px auto;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: "Press Start 2P", cursive;
+        box-shadow: 0px 0px 10px 2px #000000;
+      }
+    </style>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/css">
+      #button {
+        display: none;
+      }
+
+      .imgb_vis {
+        animation: imgb-animation 7s linear;
+      }
+
+      @keyframes imgb-animation {
+        10% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(100px);
+        }
+        90% {
+          transform: translateX(100px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div style="width: 100vw; height: 100vh; max-width: 100%">
+      <div id="game" style="display: none"></div>
+      <button id="startButton">PLAY</button>
+    </div>
+    <script>
+      document.getElementById("game").style.display = "none";
+
+      async function mergeAndCreateURL(part1Url, part2Url) {
+        const [res1, res2] = await Promise.all([
+          fetch(part1Url),
+          fetch(part2Url),
+        ]);
+        const [buf1, buf2] = await Promise.all([
+          res1.arrayBuffer(),
+          res2.arrayBuffer(),
+        ]);
+        const merged = new Uint8Array(buf1.byteLength + buf2.byteLength);
+        merged.set(new Uint8Array(buf1), 0);
+        merged.set(new Uint8Array(buf2), buf1.byteLength);
+        const blob = new Blob([merged], { type: "application/octet-stream" });
+        return URL.createObjectURL(blob);
+      }
+
+      async function fetchWithProgress(url, onProgress) {
+        const res = await fetch(url);
+        const total = parseInt(res.headers.get("content-length") || "0");
+        const reader = res.body.getReader();
+        const chunks = [];
+        let loaded = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          loaded += value.length;
+          if (total) onProgress(loaded / total);
+        }
+
+        const merged = new Uint8Array(loaded);
+        let offset = 0;
+        for (const chunk of chunks) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+        return merged.buffer;
+      }
+
+      async function startGame() {
+        const btn = document.getElementById("startButton");
+        btn.textContent = "0%";
+        btn.disabled = true;
+
+        const base =
+          "https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips@master/fireemblem2/";
+        const part1 = base + "Fire Emblem Code of the Burger King.GBA.part001";
+        const part2 = base + "Fire Emblem Code of the Burger King.GBA.part002";
+
+        let p1 = 0,
+          p2 = 0;
+        const updateBtn = () => {
+          const pct = Math.round(((p1 + p2) / 2) * 100);
+          btn.textContent = pct + "%";
+        };
+
+        const [buf1, buf2] = await Promise.all([
+          fetchWithProgress(part1, (v) => {
+            p1 = v;
+            updateBtn();
+          }),
+          fetchWithProgress(part2, (v) => {
+            p2 = v;
+            updateBtn();
+          }),
+        ]);
+
+        const merged = new Uint8Array(buf1.byteLength + buf2.byteLength);
+        merged.set(new Uint8Array(buf1), 0);
+        merged.set(new Uint8Array(buf2), buf1.byteLength);
+
+        const blob = new Blob([merged], { type: "application/octet-stream" });
+        const gameObjectURL = URL.createObjectURL(blob);
+
+        btn.style.display = "none";
+        document.getElementById("game").style.display = "block";
+
+        EJS_player = "#game";
+        EJS_core = "gba";
+        EJS_color = "#000000";
+        EJS_startOnLoaded = true;
+        EJS_pathtodata = "https://cdn.jsdelivr.net/gh/genizy/emu@master/";
+        EJS_gameUrl = gameObjectURL;
+        loadGame();
+      }
+
+      document
+        .getElementById("startButton")
+        .addEventListener("click", startGame);
+
+      function loadGame() {
+        var script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/gh/genizy/emu@master/loader.js";
+        document.body.appendChild(script);
+      }
+    </script>
+  </body>
+</html>
