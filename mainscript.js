@@ -1,4 +1,5 @@
 let CURRENT_VERSION;
+let viewsLoading = false;
 let offlineMode;
 let viewJSON;
 let bypassOn;
@@ -325,13 +326,17 @@ all dirs:
             const gameidfk = document.createElement("div");
             gameidfk.classList.add("game");
 
+            const viewText = viewJSON
+              ? `views: ${getViewsForGame(gameObj.id)}`
+              : "views: loading";
+
             gameidfk.innerHTML = `
-              <p class="id">${gameObj.id}</p>
-              <div class="right-ls">
-                <p>${gameObj.name}</p>
-                <p class="views" id="views-${gameObj.id}">views: loading</p>
-              </div>
-            `;
+            <p class="id">${gameObj.id}</p>
+            <div class="right-ls">
+              <p>${gameObj.name}</p>
+              <p class="views" id="views-${gameObj.id}">${viewText}</p>
+            </div>
+          `;
 
             gameidfk.addEventListener("click", () => {
               loadGame(gameObj.id).then((gameHtml) => {
@@ -553,30 +558,27 @@ function init(versionCheck) {
 }
 
 async function getViews() {
-  if (!viewJSON) {
-    try {
-      const res = await fetch(
-        `https://data.jsdelivr.com/v1/package/gh/picklechiplover23/htmlgames@master/stats?v=${Date.now()}`,
-        {
-          cache: "no-store",
-        },
-      );
-    } catch (err) {
-      log(
-        "error: failed to get game views (DATA API not sfools fault)",
-        "error",
-      );
-    }
+  if (viewJSON) return;
+  if (viewsLoading) return;
+  viewsLoading = true;
+  try {
+    const res = await fetch(
+      `https://data.jsdelivr.com/v1/package/gh/picklechiplover23/htmlgames@master/stats?v=${Date.now()}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     viewJSON = data.files;
-  } else {
-    return;
+  } catch (err) {
+    log("error: failed to get game views (DATA API not sfools fault)", "error");
+  } finally {
+    viewsLoading = false;
   }
 }
 
 function getViewsForGame(id) {
   if (!viewJSON) return 0;
-  return viewJSON[`/games/${id}.html`]?.total ?? "error";
+  return viewJSON[`/games/${id}.html`]?.total ?? 0;
 }
 
 function addUIElements() {
