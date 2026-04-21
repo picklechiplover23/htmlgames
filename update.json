@@ -1,8 +1,10 @@
 {
-  "version": "1.0.2",
-  "tip": "reccomend more songs for shittify",
+  "version": "1.0.3",
+  "tip": "sorry ive been updating with such small updates, lifes kinda cluttered rn and im workingg on a lot of ports to",
   "list": [
-    "added a bunch of shittify albums/songgs",
-    "fixed main bug in plague inc"
+    "added fire emblem code of the burger king",
+    "fixed version bugs",
+    "fixed bug were users would become goyim",
+    "added more shittify shit"
   ]
 }
