@@ -15,7 +15,6 @@ let html;
 const rootLink =
   "https://cdn.jsdelivr.net/gh/picklechiplover23/htmlgames@master/";
 const directories = ["root", "games", "gooner"];
-// aint no one using this cuh
 const files = {
   root: [
     {
@@ -35,7 +34,318 @@ const launchListener = (e) => {
   }
 };
 
+const DB_NAME = "sfools-asset-cache";
+const DB_VERSION = 1;
+const STORE_ASSETS = "assets";
+const STORE_GAMES = "games";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_ASSETS)) {
+        db.createObjectStore(STORE_ASSETS, { keyPath: "url" });
+      }
+      if (!db.objectStoreNames.contains(STORE_GAMES)) {
+        db.createObjectStore(STORE_GAMES, { keyPath: "id" });
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbPutAsset(url, base64, mime) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readwrite");
+    tx.objectStore(STORE_ASSETS).put({ url, base64, mime });
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbGetAsset(url) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_ASSETS, "readonly");
+    const req = tx.objectStore(STORE_ASSETS).get(url);
+    req.onsuccess = (e) => resolve(e.target.result ?? null);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbPutGameHtml(id, html) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_GAMES, "readwrite");
+    tx.objectStore(STORE_GAMES).put({ id, html });
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbGetGameHtml(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_GAMES, "readonly");
+    const req = tx.objectStore(STORE_GAMES).get(id);
+    req.onsuccess = (e) => resolve(e.target.result?.html ?? null);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function dbGetAllGameIds() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_GAMES, "readonly");
+    const req = tx.objectStore(STORE_GAMES).getAllKeys();
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function buildShim(offlineRead) {
+  return `
+<script>
+(function() {
+  const OFFLINE_READ = ${offlineRead};
+  const DB_NAME = "sfools-asset-cache";
+  const DB_VERSION = 1;
+  const STORE = "assets";
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          db.createObjectStore(STORE, { keyPath: "url" });
+        }
+        if (!db.objectStoreNames.contains("games")) {
+          db.createObjectStore("games", { keyPath: "id" });
+        }
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  function dbGet(url) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readonly");
+      const req = tx.objectStore(STORE).get(url);
+      req.onsuccess = (e) => resolve(e.target.result ?? null);
+      req.onerror = (e) => reject(e.target.error);
+    }));
+  }
+
+  function dbPut(url, base64, mime) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put({ url, base64, mime });
+      tx.oncomplete = resolve;
+      tx.onerror = (e) => reject(e.target.error);
+    }));
+  }
+
+  function toBase64(arrayBuffer) {
+    let binary = "";
+    const bytes = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
+  function base64ToBlob(base64, mime) {
+    const binary = atob(base64);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  function resolveUrl(url) {
+    try { return new URL(url, location.href).href; } catch { return url; }
+  }
+
+  const _fetch = window.fetch.bind(window);
+
+  window.fetch = async function(input, init) {
+    const url = resolveUrl(typeof input === "string" ? input : input.url);
+    if (OFFLINE_READ) {
+      const cached = await dbGet(url).catch(() => null);
+      if (cached) {
+        const blob = base64ToBlob(cached.base64, cached.mime);
+        return new Response(blob, { status: 200, headers: { "Content-Type": cached.mime } });
+      }
+    }
+    const res = await _fetch(input, init);
+    if (res.ok) {
+      const clone = res.clone();
+      clone.arrayBuffer().then(buf => {
+        const mime = clone.headers.get("content-type") || "application/octet-stream";
+        dbPut(url, toBase64(buf), mime).catch(() => {});
+      }).catch(() => {});
+    }
+    return res;
+  };
+
+  const _xhrOpen = XMLHttpRequest.prototype.open;
+  const _xhrSend = XMLHttpRequest.prototype.send;
+
+  XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+    this._shimUrl = resolveUrl(url);
+    return _xhrOpen.call(this, method, url, ...rest);
+  };
+
+  XMLHttpRequest.prototype.send = function(...args) {
+    const xhr = this;
+    const url = xhr._shimUrl;
+    if (!url) return _xhrSend.apply(xhr, args);
+
+    if (OFFLINE_READ) {
+      dbGet(url).then(cached => {
+        if (cached) {
+          const blob = base64ToBlob(cached.base64, cached.mime);
+          const blobUrl = URL.createObjectURL(blob);
+          const fakeXhr = new XMLHttpRequest();
+          fakeXhr.open("GET", blobUrl);
+          fakeXhr.responseType = xhr.responseType || "";
+          fakeXhr.addEventListener("load", () => {
+            Object.defineProperty(xhr, "response", { get: () => fakeXhr.response, configurable: true });
+            Object.defineProperty(xhr, "responseText", { get: () => { try { return fakeXhr.responseText; } catch { return ""; } }, configurable: true });
+            Object.defineProperty(xhr, "status", { get: () => 200, configurable: true });
+            Object.defineProperty(xhr, "readyState", { get: () => 4, configurable: true });
+            xhr.dispatchEvent(new Event("readystatechange"));
+            xhr.dispatchEvent(new Event("load"));
+            xhr.dispatchEvent(new ProgressEvent("loadend"));
+            URL.revokeObjectURL(blobUrl);
+          });
+          fakeXhr.send();
+        } else {
+          _xhrSend.apply(xhr, args);
+          installXhrCapture(xhr, url);
+        }
+      }).catch(() => {
+        _xhrSend.apply(xhr, args);
+        installXhrCapture(xhr, url);
+      });
+    } else {
+      _xhrSend.apply(xhr, args);
+      installXhrCapture(xhr, url);
+    }
+  };
+
+  function installXhrCapture(xhr, url) {
+    xhr.addEventListener("load", function() {
+      try {
+        if (xhr.status === 200) {
+          if (xhr.responseType === "arraybuffer" && xhr.response) {
+            const mime = xhr.getResponseHeader("content-type") || "application/octet-stream";
+            dbPut(url, toBase64(xhr.response), mime).catch(() => {});
+          } else if (xhr.responseType === "blob" && xhr.response) {
+            xhr.response.arrayBuffer().then(b => {
+              dbPut(url, toBase64(b), xhr.response.type || "application/octet-stream").catch(() => {});
+            }).catch(() => {});
+          } else {
+            const text = xhr.responseText || "";
+            const buf = new TextEncoder().encode(text).buffer;
+            const mime = xhr.getResponseHeader("content-type") || "application/octet-stream";
+            dbPut(url, toBase64(buf), mime).catch(() => {});
+          }
+        }
+      } catch {}
+    });
+  }
+
+  const _createElement = document.createElement.bind(document);
+  document.createElement = function(tag, ...rest) {
+    const el = _createElement(tag, ...rest);
+    const tagLower = tag.toLowerCase();
+    if (["img", "script", "audio", "video", "source", "link"].includes(tagLower)) {
+      const attr = tagLower === "link" ? "href" : "src";
+      let _val = "";
+      const proto = Object.getPrototypeOf(el);
+      const descriptor = Object.getOwnPropertyDescriptor(proto, attr);
+      Object.defineProperty(el, attr, {
+        get() { return _val; },
+        set(v) {
+          _val = v;
+          if (!v) return;
+          const url = resolveUrl(v);
+          if (OFFLINE_READ) {
+            dbGet(url).then(cached => {
+              if (cached) {
+                const blob = base64ToBlob(cached.base64, cached.mime);
+                const blobUrl = URL.createObjectURL(blob);
+                if (descriptor && descriptor.set) descriptor.set.call(el, blobUrl);
+                else el.setAttribute(attr, blobUrl);
+              } else {
+                if (descriptor && descriptor.set) descriptor.set.call(el, v);
+                else el.setAttribute(attr, v);
+                cacheUrlPassive(url);
+              }
+            }).catch(() => {
+              if (descriptor && descriptor.set) descriptor.set.call(el, v);
+              else el.setAttribute(attr, v);
+            });
+          } else {
+            if (descriptor && descriptor.set) descriptor.set.call(el, v);
+            else el.setAttribute(attr, v);
+            cacheUrlPassive(url);
+          }
+        },
+        configurable: true,
+      });
+    }
+    return el;
+  };
+
+  function cacheUrlPassive(url) {
+    _fetch(url).then(res => {
+      if (!res.ok) return;
+      const mime = res.headers.get("content-type") || "application/octet-stream";
+      res.arrayBuffer().then(buf => {
+        dbPut(url, toBase64(buf), mime).catch(() => {});
+      }).catch(() => {});
+    }).catch(() => {});
+  }
+})();
+<\/script>
+`;
+}
+
+function injectShim(gameHtml, offlineRead) {
+  const shim = buildShim(offlineRead);
+  const doctype = gameHtml.match(/^<!DOCTYPE[^>]*>/i)?.[0] ?? "";
+  const withoutDoctype = doctype ? gameHtml.slice(doctype.length) : gameHtml;
+  const headMatch = withoutDoctype.match(/<head[^>]*>/i);
+  if (headMatch) {
+    const idx = withoutDoctype.indexOf(headMatch[0]) + headMatch[0].length;
+    return (
+      doctype + withoutDoctype.slice(0, idx) + shim + withoutDoctype.slice(idx)
+    );
+  }
+  const htmlMatch = withoutDoctype.match(/<html[^>]*>/i);
+  if (htmlMatch) {
+    const idx = withoutDoctype.indexOf(htmlMatch[0]) + htmlMatch[0].length;
+    return (
+      doctype +
+      withoutDoctype.slice(0, idx) +
+      "<head>" +
+      shim +
+      "</head>" +
+      withoutDoctype.slice(idx)
+    );
+  }
+  return doctype + shim + withoutDoctype;
+}
+
+let offlineModeActive = localStorage.getItem("offline-mode") === "true";
+
 function actuallyLaunch() {
+  const finalHtml = injectShim(html, offlineModeActive);
+
   if (bypassOn) {
     const overlay = document.createElement("div");
     overlay.id = "bypass-overlay";
@@ -50,7 +360,7 @@ function actuallyLaunch() {
 
     const iframe = document.createElement("iframe");
     iframe.style.cssText = "width:100%;height:100%;border:none;";
-    iframe.srcdoc = html;
+    iframe.srcdoc = finalHtml;
 
     overlay.appendChild(iframe);
     document.body.appendChild(overlay);
@@ -67,20 +377,16 @@ function actuallyLaunch() {
   const gameWindow = window.open("", "_blank");
   if (!gameWindow) return;
 
-  const originalHTML = html;
-
   function loadIntoWindow() {
     gameWindow.document.open();
-    gameWindow.document.write(originalHTML);
+    gameWindow.document.write(finalHtml);
     gameWindow.document.close();
 
     const erudaScript = gameWindow.document.createElement("script");
     erudaScript.src = "https://cdn.jsdelivr.net/npm/eruda";
     erudaScript.onload = () => {
       const initScript = gameWindow.document.createElement("script");
-      initScript.textContent = `
-            eruda.init();
-          `;
+      initScript.textContent = `eruda.init();`;
       gameWindow.document.documentElement.appendChild(initScript);
     };
     gameWindow.document.documentElement.appendChild(erudaScript);
@@ -120,9 +426,7 @@ async function showUpdateMenu(latestVersion, force = false) {
 
     data.list.forEach((list) => {
       const specefic = document.createElement("li");
-
       specefic.textContent = list;
-
       listing.appendChild(specefic);
     });
 
@@ -135,62 +439,8 @@ async function showUpdateMenu(latestVersion, force = false) {
     buttonClose.addEventListener("click", () => {
       updateAlert.close();
       updateAlert.remove();
-      showDonate();
     });
   }
-}
-
-async function showDonate() {
-  const dialogShow = document.createElement("dialog");
-  dialogShow.classList.add("einstein-demands");
-
-  const res = await fetch(`${rootLink}money.txt`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    log("donated amount fetch failed", "error");
-    loadTyper();
-  }
-
-  const data = await res.text();
-
-  dialogShow.innerHTML = `
-               <img
-        src="https://cdn.jsdelivr.net/gh/picklechiplover23/htmlgames@main/Farrow-JeffreyEpstein-2.webp"
-        id="einstein"
-      />
-      <div class="info-demands">
-        <h2>donate tight boy.</h2>
-        <p>
-          HEY YOU! do you wanna have a private youtube client? AND visit my
-          private island? donate to SFools NOW! our goal is $30
-        </p>
-        <div class="donation-wrapper">
-          <span class="amount">$0</span>
-
-          <div class="progress-bar">
-            <progress id="donation-progress" value="${data}" max="30"></progress>
-          </div>
-
-          <span class="amount">$30</span>
-        </div>
-
-        <div class="clicking-stuff">
-          <button id="donate-now">yes i will</button>
-        </div>
-      </div>
-        `;
-
-  document.body.appendChild(dialogShow);
-  dialogShow.showModal();
-
-  const buttonClose = dialogShow.querySelector("#donate-now");
-
-  buttonClose.addEventListener("click", () => {
-    dialogShow.close();
-    dialogShow.remove();
-  });
 }
 
 const commands = {
@@ -339,6 +589,26 @@ all dirs:
           `;
 
             gameidfk.addEventListener("click", () => {
+              if (offlineModeActive) {
+                dbGetGameHtml(gameObj.id)
+                  .then((cached) => {
+                    if (!cached) {
+                      log(
+                        `game ${gameObj.id}: not cached — open it online first`,
+                        "warn",
+                      );
+                      loadTyper();
+                      return;
+                    }
+                    html = cached;
+                    actuallyLaunch();
+                  })
+                  .catch((err) => {
+                    log(`ERROR: ${err}`, "error");
+                    loadTyper();
+                  });
+                return;
+              }
               loadGame(gameObj.id).then((gameHtml) => {
                 html = gameHtml;
                 actuallyLaunch();
@@ -459,6 +729,28 @@ all dirs:
       const gameNumber = parseInt(game, 10);
 
       if (!isNaN(gameNumber)) {
+        if (offlineModeActive) {
+          return dbGetGameHtml(gameNumber)
+            .then((cached) => {
+              if (!cached) {
+                log(
+                  `game ${gameNumber}: not cached — open it online first`,
+                  "warn",
+                );
+                loadTyper();
+                return;
+              }
+              log(`To launch game press "Enter"`, "info");
+              html = cached;
+              document.addEventListener("keydown", launchListener, {
+                once: true,
+              });
+            })
+            .catch((err) => {
+              log(`ERROR: ${err}`, "error");
+              loadTyper();
+            });
+        }
         return loadGame(gameNumber)
           .then((gameHtml) => {
             log(`To launch game press "Enter"`, "info");
@@ -562,6 +854,15 @@ async function getViews() {
   if (viewsLoading) return;
   viewsLoading = true;
   try {
+    if (offlineModeActive) {
+      const cached = await dbGetAsset("__views_json__").catch(() => null);
+      if (cached) {
+        viewJSON = JSON.parse(atob(cached.base64));
+        return;
+      }
+      log("views not cached yet — open ls online first", "warn");
+      return;
+    }
     const res = await fetch(
       `https://data.jsdelivr.com/v1/package/gh/picklechiplover23/htmlgames@master/stats?v=${Date.now()}`,
       { cache: "no-store" },
@@ -569,6 +870,11 @@ async function getViews() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     viewJSON = data.files;
+    dbPutAsset(
+      "__views_json__",
+      btoa(JSON.stringify(data.files)),
+      "application/json",
+    ).catch(() => {});
   } catch (err) {
     log("error: failed to get game views (DATA API not sfools fault)", "error");
   } finally {
@@ -584,12 +890,11 @@ function getViewsForGame(id) {
 function addUIElements() {
   const button = document.createElement("button");
   button.classList.add("forum-button");
-
+  button.tabIndex = -1;
   button.textContent = "requests & issues";
-
   document.querySelector("body").appendChild(button);
-
   button.addEventListener("click", () => {
+    document.body.focus();
     window.open(
       "https://docs.google.com/forms/d/e/1FAIpQLSetcNAFkZMXlVZ9MCik9xGfTDwzhjtwP88WjLdH55BY4bqb9g/viewform?usp=publish-editor",
       "_blank",
@@ -598,12 +903,11 @@ function addUIElements() {
 
   const button2 = document.createElement("button");
   button2.classList.add("button-log");
-
+  button2.tabIndex = -1;
   button2.textContent = "show update log";
-
   document.querySelector("body").appendChild(button2);
-
   button2.addEventListener("click", () => {
+    document.body.focus();
     showUpdateMenu(CURRENT_VERSION, true);
   });
 
@@ -611,16 +915,15 @@ function addUIElements() {
   button3.classList.add("button-general");
   button3.classList.add("bypasser");
   button3.classList.add("button-log");
-
+  button3.tabIndex = -1;
   if (!bypassOn) {
     button3.innerHTML = "<p>bypass: <span class='showerfalse'>off</span></p>";
   } else {
     button3.innerHTML = "<p>bypass: <span class='showertrue'>on</span></p>";
   }
-
   document.querySelector("body").appendChild(button3);
-
   button3.addEventListener("click", () => {
+    document.body.focus();
     if (bypassOn) {
       bypassOn = false;
       button3.innerHTML = "<p>bypass: <span class='showerfalse'>off</span></p>";
@@ -641,20 +944,15 @@ function addUIElements() {
   button4.classList.add("button-general");
   button4.classList.add("button-log");
   button4.classList.add("spotify");
-
-  button4.innerHTML = `
-      <img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png"/>
-    `;
-
+  button4.tabIndex = -1;
+  button4.innerHTML = `<img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png"/>`;
   document.querySelector("body").appendChild(button4);
-
   button4.addEventListener("click", async () => {
+    document.body.focus();
     const res = await fetch(
       "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/shittify21.html?v=" +
         Date.now(),
-      {
-        cache: "no-store",
-      },
+      { cache: "no-store" },
     );
     const pageHtml = await res.text();
 
@@ -689,6 +987,41 @@ function addUIElements() {
       w.document.close();
     }
   });
+
+  const button5 = document.createElement("button");
+  button5.classList.add("button-general");
+  button5.classList.add("button-log");
+  button5.classList.add("offline-btn");
+  button5.tabIndex = -1;
+  updateOfflineButton(button5);
+  document.querySelector("body").appendChild(button5);
+  button5.addEventListener("click", () => {
+    document.body.focus();
+    if (offlineModeActive) {
+      offlineModeActive = false;
+      localStorage.setItem("offline-mode", "false");
+      updateOfflineButton(button5);
+      log("offline mode disabled — everything will load normally", "info");
+      loadTyper();
+    } else {
+      offlineModeActive = true;
+      localStorage.setItem("offline-mode", "true");
+      updateOfflineButton(button5);
+      log(
+        "offline mode enabled — you MUST open a game and do ls all in online mode for it to work",
+        "warn",
+      );
+      loadTyper();
+    }
+  });
+}
+
+function updateOfflineButton(btn) {
+  if (offlineModeActive) {
+    btn.innerHTML = "<p>offline: <span class='showertrue'>on</span></p>";
+  } else {
+    btn.innerHTML = "<p>offline: <span class='showerfalse'>off</span></p>";
+  }
 }
 
 function addAprilFools() {}
@@ -781,16 +1114,24 @@ function loadTyper() {
 }
 
 async function loadJSON() {
+  if (offlineModeActive) {
+    const cached = await dbGetAsset("__games_json__").catch(() => null);
+    if (cached) {
+      try {
+        return JSON.parse(atob(cached.base64));
+      } catch {}
+    }
+    throw new Error(
+      "game not cached (you have to open it in online mode first)",
+    );
+  }
   try {
     const url = `${rootLink}games.json?v=${Date.now()}`;
-
-    const response = await fetch(url, {
-      cache: "no-store",
-    });
-
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("network error");
-
     const data = await response.json();
+    const encoded = btoa(JSON.stringify(data));
+    dbPutAsset("__games_json__", encoded, "application/json").catch(() => {});
     return data;
   } catch (err) {
     throw new Error(`failed to load games: ${err.message}`);
@@ -801,56 +1142,24 @@ async function loadGame(id) {
   try {
     const response = await fetch(
       `${rootLink}games/${id}.html?v=${Date.now()}`,
-      {
-        cache: "no-store",
-      },
+      { cache: "no-store" },
     );
     if (!response.ok) throw new Error("network error");
     const data = await response.text();
+    dbPutGameHtml(id, data).catch(() => {});
     return data;
   } catch (err) {
     throw new Error(`failed to load game: ${err.message}`);
   }
 }
 
-// (function () {
-//   const debug = new Function("debugger");
-//   setInterval(debug, 100);
-// })();
-
-// document.addEventListener("keydown", function (e) {
-//   if (e.keyCode === 123) {
-//     e.preventDefault();
-//     return false;
-//   }
-
-//   if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-//     e.preventDefault();
-//     return false;
-//   }
-
-//   if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
-//     e.preventDefault();
-//     return false;
-//   }
-
-//   if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
-//     e.preventDefault();
-//     return false;
-//   }
-
-//   if (e.ctrlKey && e.keyCode === 85) {
-//     e.preventDefault();
-//     return false;
-//   }
-
-//   if (e.key === "F12") {
-//     e.preventDefault();
-//     return false;
-//   }
-// });
-
 document.addEventListener("contextmenu", function (e) {
   e.preventDefault();
   return false;
+});
+
+window.addEventListener("beforeunload", function (e) {
+  e.preventDefault();
+  e.returnValue = "";
+  return "";
 });
