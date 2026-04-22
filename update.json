@@ -1,11 +1,11 @@
 {
-  "version": "1.0.3",
-  "tip": "sorry ive been updating with such small updates, lifes kinda cluttered rn and im workingg on a lot of ports to",
+  "version": "1.1.0",
+  "tip": "pls stop complaining about lack of songs on shittify if ur not reccomending any albums/songs",
   "list": [
-    "added fire emblem code of the burger king",
-    "fixed version bugs",
-    "fixed bug were users would become goyim",
-    "added more shittify shit",
-    "Biolgy EOC"
+    "added experimental anti tab closing (ty kristian for method)",
+    "added 15+ games",
+    "added offline mode (you can disconnect from wifi to stop teachers stalking) slightly buggy in certain games",
+    "added shittify album requests",
+    "removed donate popup"
   ]
 }
