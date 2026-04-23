@@ -446,7 +446,7 @@ progress::-webkit-progress-bar {
   justify-content: center;
   width: 38px;
   height: 38px;
-  margin-right: calc(320px + 110px + 10px + 110px + 10px) !important;
+  margin-right: calc(190px + 110px + 10px + 110px + 10px) !important;
 }
 
 .spotify img {
