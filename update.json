@@ -1,11 +1,9 @@
 {
-  "version": "1.1.0",
-  "tip": "pls stop complaining about lack of songs on shittify if ur not reccomending any albums/songs",
+  "version": "1.1.1",
+  "tip": "chat might be coming soon chat.",
   "list": [
-    "added experimental anti tab closing (ty kristian for method)",
-    "added 15+ games",
-    "added offline mode (you can disconnect from wifi to stop teachers stalking) slightly buggy in certain games",
-    "added shittify album requests",
-    "removed donate popup"
+    "added 10+ games",
+    "added a bunch of song requests for shittify",
+    "removed offline mode (to buggy for release)"
   ]
 }
