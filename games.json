@@ -1067,6 +1067,48 @@
     {
       "id": 255,
       "name": "Yume Nikki"
+    },
+    {
+      "id": 256,
+      "name": "Achivement Unlocked 2"
+    },
+    {
+      "id": 257,
+      "name": "Achivement Unlocked 3"
+    },
+    {
+      "id": 258,
+      "name": "Achivement Unlocked"
+    },
+    {
+      "id": 259,
+      "name": "Adventure Capatalist"
+    },
+    {
+      "id": 260,
+      "name": "Trees Hate You"
+    },
+    {
+      "id": 261,
+      "name": "Deltatraveler"
+    }
+  ],
+  "26": [
+    {
+      "id": 262,
+      "name": "Helltaker"
+    },
+    {
+      "id": 263,
+      "name": "Kitty Toy"
+    },
+    {
+      "id": 264,
+      "name": "NAZI Zombies"
+    },
+    {
+      "id": 265,
+      "name": "Peaks of Yore"
     }
   ]
 }
