@@ -73,15 +73,13 @@ p {
 }
 
 .support {
-  color: #dc44f0;
+  color: #dd83e9;
   font-weight: bold;
 }
 
 .marginless {
   margin: 0 !important;
 }
-
-/* ─── Vanta background + root overlay ─── */
 
 #aha {
   position: fixed;
@@ -104,8 +102,6 @@ p {
   min-height: 100vh;
   padding: 20px;
 }
-
-/* ─── Games list ─── */
 
 .games {
   display: inline-flex;
@@ -180,8 +176,6 @@ p {
   font-size: 0.7em;
 }
 
-/* ─── Scrollbar ─── */
-
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -206,8 +200,6 @@ p {
   scrollbar-width: thin;
   scrollbar-color: #333 #111;
 }
-
-/* ─── Update log dialog ─── */
 
 .update-log {
   display: flex;
@@ -252,8 +244,6 @@ p {
   justify-content: center;
   align-items: center;
 }
-
-/* ─── Einstein demands ─── */
 
 .einstein-demands {
   position: fixed;
@@ -342,8 +332,6 @@ progress::-webkit-progress-bar {
   color: rgb(139, 253, 139);
 }
 
-/* ─── Fixed buttons ─── */
-
 .forum-button {
   position: fixed;
   bottom: 0;
@@ -424,8 +412,6 @@ progress::-webkit-progress-bar {
 .offline-btn {
   margin-right: calc(320px + 110px + 10px) !important;
 }
-
-/* ─── Chat overlay ─── */
 
 .chat-overlay {
   position: fixed;
