@@ -27,6 +27,11 @@ const files = {
   themes: [],
 };
 
+window.onerror = function (msg, src, line, col, err) {
+  alert(`ERR: ${msg}\nFile: ${src}\nLine: ${line}\n${err?.stack || ""}`);
+  return false;
+};
+
 let gameWindow = null;
 const launchListener = (e) => {
   if (e.key === "Enter") actuallyLaunch();
@@ -846,19 +851,26 @@ window.addEventListener("beforeunload", () => {
   }
 });
 
-window.addEventListener("DOMContentLoaded", () => {
-  init(true);
-
-  window.addEventListener("unhandledrejection", (event) => {
-    log(event.reason, "error");
-    loadTyper();
-  });
-
-  window.addEventListener("error", (event) => {
-    log(event.error || event.message, "error");
-    loadTyper();
-  });
+window.addEventListener("unhandledrejection", (event) => {
+  log(event.reason, "error");
+  loadTyper();
 });
+
+window.addEventListener("error", (event) => {
+  log(event.error || event.message, "error");
+  loadTyper();
+});
+
+if (document.currentScript === null) {
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    init(true);
+  } else {
+    window.addEventListener("DOMContentLoaded", () => init(true));
+  }
+}
 
 function init(versionCheck) {
   root.innerHTML = ``;
