@@ -1044,7 +1044,7 @@
     },
     {
       "id": 250,
-      "name": "Vex 5"
+      "name": "Vex 4"
     },
     {
       "id": 251,
@@ -1109,6 +1109,30 @@
     {
       "id": 265,
       "name": "Peaks of Yore"
+    },
+    {
+      "id": 266,
+      "name": "Binding Of Isaac Wrath of the Lamb"
+    },
+    {
+      "id": 267,
+      "name": "Raft Wars 2"
+    },
+    {
+      "id": 268,
+      "name": "Cooking Mama"
+    },
+    {
+      "id": 269,
+      "name": "Meat Boy"
+    },
+    {
+      "id": 270,
+      "name": "Pizza Tower  Scoutdigo"
+    },
+    {
+      "id": 271,
+      "name": "Suika Game"
     }
   ]
 }
