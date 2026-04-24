@@ -2,6 +2,7 @@
   --background-color: black;
   --font-color: white;
 }
+
 * {
   font-family: "DejaVu Sans Mono", "Liberation Mono", "Monospace", monospace;
   color: var(--font-color);
@@ -80,20 +81,31 @@ p {
   margin: 0 !important;
 }
 
+/* ─── Vanta background + root overlay ─── */
+
 #aha {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;
-  z-index: -1;
+  height: 100%;
+  z-index: 0;
+}
+
+#aha canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
 #root {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  padding: 20px;
 }
+
+/* ─── Games list ─── */
 
 .games {
   display: inline-flex;
@@ -110,31 +122,6 @@ p {
 .header * {
   margin: 0;
   padding: 5px;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #111;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #333;
-  border-radius: 5px;
-  border: 2px solid #111;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: #555;
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #333 #111;
 }
 
 .header > :first-child {
@@ -180,6 +167,48 @@ p {
   min-width: 30px;
 }
 
+.right-ls {
+  display: flex;
+  border-bottom: 1px solid white;
+  gap: 5px;
+}
+
+.views {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0.6;
+  font-size: 0.7em;
+}
+
+/* ─── Scrollbar ─── */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #333;
+  border-radius: 5px;
+  border: 2px solid #111;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #333 #111;
+}
+
+/* ─── Update log dialog ─── */
+
 .update-log {
   display: flex;
   justify-content: center;
@@ -224,12 +253,13 @@ p {
   align-items: center;
 }
 
+/* ─── Einstein demands ─── */
+
 .einstein-demands {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
   display: flex;
   justify-content: center;
   z-index: 1000;
@@ -255,6 +285,7 @@ p {
   overflow-wrap: break-word;
   white-space: normal !important;
 }
+
 .info-demands h2 {
   margin-bottom: 10px;
 }
@@ -311,19 +342,7 @@ progress::-webkit-progress-bar {
   color: rgb(139, 253, 139);
 }
 
-#aha {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  z-index: -1;
-}
-
-#root {
-  position: relative;
-  z-index: 1;
-}
+/* ─── Fixed buttons ─── */
 
 .forum-button {
   position: fixed;
@@ -343,19 +362,6 @@ progress::-webkit-progress-bar {
   background-color: white;
   color: black;
   border: 1px solid black;
-}
-
-.right-ls {
-  display: flex;
-  border-bottom: 1px solid white;
-  gap: 5px;
-}
-
-.views {
-  display: flex;
-  justify-content: flex-end;
-  opacity: 0.6;
-  font-size: 0.7em;
 }
 
 .button-log {
@@ -418,6 +424,8 @@ progress::-webkit-progress-bar {
 .offline-btn {
   margin-right: calc(320px + 110px + 10px) !important;
 }
+
+/* ─── Chat overlay ─── */
 
 .chat-overlay {
   position: fixed;
