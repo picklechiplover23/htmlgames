@@ -332,16 +332,32 @@ progress::-webkit-progress-bar {
   color: rgb(139, 253, 139);
 }
 
-.forum-button {
+#btn-strip {
   position: fixed;
-  bottom: 0;
-  right: 0;
+  bottom: 20px;
+  right: 20px;
   z-index: 9999;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.forum-button,
+.button-log,
+.bypasser,
+.dl-latest,
+.spotify {
+  position: static !important;
+  margin: 0 !important;
+  bottom: auto !important;
+  right: auto !important;
+}
+
+.forum-button {
   background-color: black;
   color: white;
   border: 1px solid white;
-  margin-bottom: 20px;
-  margin-right: 20px;
   padding: 10px;
   cursor: pointer;
 }
@@ -353,15 +369,9 @@ progress::-webkit-progress-bar {
 }
 
 .button-log {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  z-index: 9999;
   background-color: black;
   color: white;
   border: 1px solid white;
-  margin-bottom: 20px;
-  margin-right: calc(20px + 20px + 140px);
   padding: 10px;
   cursor: pointer;
 }
@@ -383,7 +393,11 @@ progress::-webkit-progress-bar {
 }
 
 .bypasser {
-  margin-right: calc(20px + 20px + 140px + 10px + 130px) !important;
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+  padding: 10px;
+  cursor: pointer;
 }
 
 .showerfalse {
@@ -395,13 +409,29 @@ progress::-webkit-progress-bar {
   font-weight: bold;
 }
 
+.dl-latest {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  background-color: black;
+  border: 1px solid white;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dl-latest:hover {
+  background-color: white;
+  color: black !important;
+  border: 1px solid black;
+}
+
 .spotify {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 38px;
   height: 38px;
-  margin-right: calc(190px + 110px + 10px + 110px + 10px) !important;
+  padding: 0;
 }
 
 .spotify img {
@@ -509,4 +539,32 @@ progress::-webkit-progress-bar {
   border: none;
   outline: none;
   caret-color: white;
+}
+
+.search-bar-wrap {
+  padding: 6px 8px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.game-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85em;
+  outline: none;
+  padding: 2px 0;
+  caret-color: currentColor;
+  box-sizing: border-box;
+}
+
+.game-search-input::placeholder {
+  color: rgb(255, 255, 255);
+  opacity: 0.8;
+}
+
+.game-search-input:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.6);
 }
