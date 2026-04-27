@@ -1,9 +1,11 @@
 {
-  "version": "1.1.2",
-  "tip": "sorry, chatroom upd was supposed to be today but everything decided to break right before relelase and im so done with this bs rn its 12 am and my mother screaming at me to sleep, chat tmrw ✌️",
+  "version": "1.2.0",
+  "tip": "IF YOU HAVE A FILE NOT SHARED BY ME PLEASE DOWNLOAD THE NEWEST ONE BY CLICKING THE DOWNLOAD LATEST BUTTON BOTTOM RIGHT (auto update doesnt cover this major visual bugg)",
   "list": [
-    "added  6+ games",
-    "fixed nazi zombies",
-    "added shittify requests (ps i accidently deleted some requests so if urs didnt get added rerequest it"
+    "added chat (use cd chat, and ls chat and create {roomname} {public or private}",
+    "added search bar for games",
+    "fixed major ui bug",
+    "sorry no new shittify songgs today I was working on 3ds emu all weekend",
+    "(3ds emu is ALMOST finished, coming out VERY soon)"
   ]
 }
