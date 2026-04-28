@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips/Tomodachi/"
+    />
+    <title>Tomigoon</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #05070b;
+        color: #eef3ff;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      #player {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #status-overlay {
+        position: fixed;
+        left: 16px;
+        bottom: 16px;
+        max-width: min(520px, calc(100vw - 32px));
+        padding: 9px 12px;
+        color: rgba(220, 226, 236, 0.72);
+        font-size: 12px;
+        line-height: 1.45;
+        letter-spacing: 0.01em;
+        pointer-events: none;
+        opacity: 1;
+        transition:
+          opacity 0.45s ease,
+          transform 0.45s ease,
+          border-color 0.2s ease,
+          color 0.2s ease;
+        transform: translateY(0);
+        z-index: 20;
+      }
+
+      #status-overlay.error {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      #status-overlay.hidden {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="player"></div>
+    <div id="status-overlay">Preparing Azahar Web demo...</div>
+
+    <script src="https://cdn.jsdelivr.net/gh/SomeRandomFella/Azahar-Web@main/Build/azahar-web.js"></script>
+    <script>
+      const HOMEBREW_URL = "errfix.3dsx";
+      const ROM_BASE_URL = "Tomodachi Life (USA) (Rev 1).cci";
+      const ROM_PART_COUNT = 27;
+      const HOME_BREW_RUNTIME_MS = 8000;
+      const SUCCESS_HIDE_DELAY_MS = 2200;
+
+      const statusOverlay = document.getElementById("status-overlay");
+      let statusHideTimer = 0;
+
+      function setStatus(text, options = {}) {
+        const { error = false, autoHide = false } = options;
+        window.clearTimeout(statusHideTimer);
+        statusOverlay.textContent = text;
+        statusOverlay.classList.toggle("error", error);
+        statusOverlay.classList.remove("hidden");
+        console.log(`[Azahar Demo] ${text}`);
+
+        if (autoHide && !error) {
+          statusHideTimer = window.setTimeout(() => {
+            statusOverlay.classList.add("hidden");
+          }, SUCCESS_HIDE_DELAY_MS);
+        }
+      }
+
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function fetchRomParts() {
+        const parts = [];
+        for (let i = 1; i <= ROM_PART_COUNT; i += 1) {
+          const partNum = String(i).padStart(3, "0");
+          const url = `${ROM_BASE_URL}.part${partNum}`;
+          setStatus(`Fetching ROM part ${i} of ${ROM_PART_COUNT}...`);
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch part ${i}: ${response.status} ${response.statusText}`,
+            );
+          }
+          parts.push(await response.arrayBuffer());
+        }
+
+        setStatus("Assembling ROM parts...");
+        const totalSize = parts.reduce((sum, part) => sum + part.byteLength, 0);
+        const combined = new Uint8Array(totalSize);
+        let offset = 0;
+        for (const part of parts) {
+          combined.set(new Uint8Array(part), offset);
+          offset += part.byteLength;
+        }
+        return combined.buffer;
+      }
+
+      let playerPromise = null;
+      let flowPromise = null;
+
+      async function getPlayer() {
+        if (!playerPromise) {
+          playerPromise = window.AzaharWeb.createAzaharWeb({
+            target: "#player",
+            autoLoadCore: true,
+            width: "100%",
+            height: "100%",
+          });
+        }
+        return playerPromise;
+      }
+
+      async function runFlow() {
+        try {
+          const player = await getPlayer();
+
+          setStatus("Booting errfix homebrew...");
+          await player.bootHomebrewFromUrl(HOMEBREW_URL, {
+            name: "errfix.3dsx",
+            virtualPath: "/save/sdmc/3ds/errfix/errfix.3dsx",
+          });
+
+          setStatus(
+            `Homebrew is running. Waiting ${Math.round(HOME_BREW_RUNTIME_MS / 1000)} seconds before booting the ROM...`,
+          );
+          await sleep(HOME_BREW_RUNTIME_MS);
+
+          setStatus("Unloading homebrew...");
+          await player.unloadGame();
+
+          const romBuffer = await fetchRomParts();
+
+          setStatus("Booting Tomodachi Life ROM...");
+          await player.bootRomFromBuffer(romBuffer, {
+            name: "Tomodachi Life (USA) (Rev 1).cci",
+          });
+
+          setStatus("ROM booted.", { autoHide: true });
+        } catch (error) {
+          console.error(error);
+          setStatus(`Flow failed: ${error.message || error}`, { error: true });
+        }
+      }
+
+      function startFlow() {
+        if (flowPromise) {
+          return flowPromise;
+        }
+        flowPromise = runFlow().finally(() => {
+          flowPromise = null;
+        });
+        return flowPromise;
+      }
+
+      setStatus("Auto-starting homebrew then ROM flow...");
+      startFlow();
+    </script>
+  </body>
+</html>
