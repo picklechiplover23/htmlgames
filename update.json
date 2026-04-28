@@ -1,11 +1,9 @@
 {
-  "version": "1.2.0",
-  "tip": "IF YOU HAVE A FILE NOT SHARED BY ME PLEASE DOWNLOAD THE NEWEST ONE BY CLICKING THE DOWNLOAD LATEST BUTTON BOTTOM RIGHT (auto update doesnt cover this major visual bugg)",
+  "version": "1.2.1",
+  "tip": "3DS EMULATOR FINISHED TOMIDACHI LIFE HERE",
   "list": [
-    "added chat (use cd chat, and ls chat and create {roomname} {public or private}",
-    "added search bar for games",
-    "fixed major ui bug",
-    "sorry no new shittify songgs today I was working on 3ds emu all weekend",
-    "(3ds emu is ALMOST finished, coming out VERY soon)"
+    "fixed chat stuff",
+    "added tomidachi life",
+    "added some shittify requqests (sorry couldnt add many i have a lot of hw and theres a lot of requests)"
   ]
 }
