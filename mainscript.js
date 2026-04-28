@@ -116,7 +116,20 @@ function connectSocket() {
     }
   });
 
+  socket.on("disconnect", () => {
+    if (chatOverlay) {
+      currentRoom = null;
+      closeChatOverlay();
+      log("chat: disconnected from server", "error");
+      loadTyper();
+    }
+  });
+
   socket.on("connect_error", () => {
+    if (chatOverlay) {
+      currentRoom = null;
+      closeChatOverlay();
+    }
     log("chat: could not reach server", "error");
     loadTyper();
   });
@@ -158,12 +171,12 @@ function connectSocket() {
   });
 
   socket.on("room:user_joined", ({ username: u }) => {
-    chatPrint(`→ ${u} joined`, "info");
+    chatPrint(`\u2192 ${u} joined`, "info");
     updateUserList();
   });
 
   socket.on("room:user_left", ({ username: u }) => {
-    chatPrint(`← ${u} left`, "info");
+    chatPrint(`\u2190 ${u} left`, "info");
     updateUserList();
   });
 
@@ -172,7 +185,7 @@ function connectSocket() {
   });
 
   socket.on("message:receive", ({ from, message }) => {
-    chatPrint(`@${from}: ${message}`, from === chatUsername ? "self" : "");
+    chatPrint(`@${from}: ${message}`, from === chatUsername ? "self" : "other");
   });
 
   socket.on("rooms:public", (publicRooms) => {
@@ -309,15 +322,35 @@ function chatPrint(text, type) {
     const colonIdx = text.indexOf(": ");
     if (atIdx === 0 && colonIdx > 1) {
       const uname = text.slice(1, colonIdx);
-      const rest = text.slice(colonIdx);
+      const msgBody = text.slice(colonIdx + 2);
+
       const nameSpan = document.createElement("span");
       nameSpan.textContent = `@${uname}`;
       nameSpan.style.color = getUserColor(uname);
       nameSpan.style.fontWeight = "bold";
-      const restSpan = document.createElement("span");
-      restSpan.textContent = rest;
+
+      const colonSpan = document.createElement("span");
+      colonSpan.textContent = ": ";
+
       line.appendChild(nameSpan);
-      line.appendChild(restSpan);
+      line.appendChild(colonSpan);
+
+      const words = msgBody.split(/(\s+)/);
+      for (const word of words) {
+        if (/^@\S+$/.test(word)) {
+          const mentionSpan = document.createElement("span");
+          mentionSpan.textContent = word;
+          const mentionTarget = word.slice(1);
+          mentionSpan.style.color = getUserColor(mentionTarget);
+          mentionSpan.style.fontWeight = "bold";
+          if (mentionTarget === chatUsername) {
+            mentionSpan.style.textDecoration = "underline";
+          }
+          line.appendChild(mentionSpan);
+        } else {
+          line.appendChild(document.createTextNode(word));
+        }
+      }
     } else {
       line.textContent = text;
     }
@@ -340,12 +373,21 @@ function renderRoomList(publicRooms) {
   const roomDiv = document.createElement("div");
   roomDiv.classList.add("games");
 
-  roomDiv.innerHTML = `
-    <div class="header">
-      <p>code</p>
-      <p>name</p>
-    </div>
-  `;
+  const headerRow = document.createElement("div");
+  headerRow.classList.add("header");
+
+  const codeHeader = document.createElement("p");
+  codeHeader.textContent = "code";
+  codeHeader.style.width = "60px";
+  codeHeader.style.minWidth = "60px";
+  codeHeader.style.borderRight = "1px solid white";
+
+  const nameHeader = document.createElement("p");
+  nameHeader.textContent = "name";
+
+  headerRow.appendChild(codeHeader);
+  headerRow.appendChild(nameHeader);
+  roomDiv.appendChild(headerRow);
 
   if (!publicRooms.length) {
     log("no public rooms", "info");
@@ -357,13 +399,29 @@ function renderRoomList(publicRooms) {
     const row = document.createElement("div");
     row.classList.add("game");
 
-    row.innerHTML = `
-      <p class="id">${r.code}</p>
-      <div class="right-ls">
-        <p>${r.name}</p>
-        <p class="views">users: ${r.memberCount}</p>
-      </div>
-    `;
+    const codeCell = document.createElement("p");
+    codeCell.classList.add("id");
+    codeCell.textContent = r.code;
+    codeCell.style.width = "60px";
+    codeCell.style.minWidth = "60px";
+    codeCell.style.maxWidth = "60px";
+    codeCell.style.overflow = "hidden";
+    codeCell.style.textOverflow = "ellipsis";
+
+    const rightCell = document.createElement("div");
+    rightCell.classList.add("right-ls");
+
+    const nameP = document.createElement("p");
+    nameP.textContent = r.name;
+
+    const usersP = document.createElement("p");
+    usersP.classList.add("views");
+    usersP.textContent = `users: ${r.memberCount}`;
+
+    rightCell.appendChild(nameP);
+    rightCell.appendChild(usersP);
+    row.appendChild(codeCell);
+    row.appendChild(rightCell);
 
     row.addEventListener("click", () => {
       ensureSocket(() => {
@@ -394,7 +452,7 @@ function actuallyLaunch() {
     closeBtn.id = "bypass-close";
     closeBtn.style.cssText =
       "position:fixed;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#000;color:#fff;font-size:18px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000;line-height:1;";
-    closeBtn.textContent = "×";
+    closeBtn.textContent = "\u00d7";
 
     const iframe = document.createElement("iframe");
     iframe.style.cssText = "width:100%;height:100%;border:none;";
@@ -448,30 +506,42 @@ async function showUpdateMenu(latestVersion, force = false) {
 
     const data = await res.json();
 
-    updateAlert.innerHTML = `
-      <div id="tip">
-        <h1>update v${data.version}</h1>
-        <p>${data.tip}</p>
-      </div>
-      <ul></ul>
-      <div id="enoughWithTheWrappersSmh">
-        <button id="closeMe">close me</button>
-      </div>
-    `;
+    const tip = document.createElement("div");
+    tip.id = "tip";
 
-    const listing = updateAlert.querySelector("ul");
+    const tipH1 = document.createElement("h1");
+    tipH1.textContent = `update v${data.version}`;
 
+    const tipP = document.createElement("p");
+    tipP.textContent = data.tip;
+
+    tip.appendChild(tipH1);
+    tip.appendChild(tipP);
+
+    const listing = document.createElement("ul");
     data.list.forEach((item) => {
       const li = document.createElement("li");
       li.textContent = item;
       listing.appendChild(li);
     });
 
+    const footer = document.createElement("div");
+    footer.id = "enoughWithTheWrappersSmh";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "closeMe";
+    closeBtn.textContent = "close me";
+
+    footer.appendChild(closeBtn);
+    updateAlert.appendChild(tip);
+    updateAlert.appendChild(listing);
+    updateAlert.appendChild(footer);
+
     document.body.appendChild(updateAlert);
     updateAlert.showModal();
     localStorage.setItem("update-log", `${latestVersion}`);
 
-    updateAlert.querySelector("#closeMe").addEventListener("click", () => {
+    closeBtn.addEventListener("click", () => {
       updateAlert.close();
       updateAlert.remove();
     });
@@ -550,6 +620,11 @@ all dirs:
   name: (args) => {
     if (currentDir !== "chat") {
       log("name: not in chat dir", "warn");
+      loadTyper();
+      return;
+    }
+    if (currentRoom) {
+      log("name: cannot change username while in a room", "warn");
       loadTyper();
       return;
     }
@@ -685,21 +760,31 @@ all dirs:
           const gameDiv = document.createElement("div");
           gameDiv.classList.add("games");
 
-          gameDiv.innerHTML = `
-            <div class="header">
-              <p>id</p>
-              <p>name</p>
-            </div>
-            <div class="search-bar-wrap">
-              <input
-                type="text"
-                class="game-search-input"
-                placeholder="search games..."
-                autocomplete="off"
-                spellcheck="false"
-              />
-            </div>
-          `;
+          const headerRow = document.createElement("div");
+          headerRow.classList.add("header");
+
+          const idHeader = document.createElement("p");
+          idHeader.textContent = "id";
+
+          const nameHeader = document.createElement("p");
+          nameHeader.textContent = "name";
+
+          headerRow.appendChild(idHeader);
+          headerRow.appendChild(nameHeader);
+          gameDiv.appendChild(headerRow);
+
+          const searchWrap = document.createElement("div");
+          searchWrap.classList.add("search-bar-wrap");
+
+          const searchInput = document.createElement("input");
+          searchInput.type = "text";
+          searchInput.classList.add("game-search-input");
+          searchInput.placeholder = "search games...";
+          searchInput.autocomplete = "off";
+          searchInput.spellcheck = false;
+
+          searchWrap.appendChild(searchInput);
+          gameDiv.appendChild(searchWrap);
 
           const pages = Object.keys(stuff).length;
           const currentPage = args[0] || 1;
@@ -712,13 +797,25 @@ all dirs:
               ? `views: ${getViewsForGame(gameObj.id)}`
               : "views: loading";
 
-            gameidfk.innerHTML = `
-              <p class="id">${gameObj.id}</p>
-              <div class="right-ls">
-                <p>${gameObj.name}</p>
-                <p class="views" id="views-${gameObj.id}">${viewText}</p>
-              </div>
-            `;
+            const idCell = document.createElement("p");
+            idCell.classList.add("id");
+            idCell.textContent = gameObj.id;
+
+            const rightCell = document.createElement("div");
+            rightCell.classList.add("right-ls");
+
+            const nameP = document.createElement("p");
+            nameP.textContent = gameObj.name;
+
+            const viewsP = document.createElement("p");
+            viewsP.classList.add("views");
+            viewsP.id = `views-${gameObj.id}`;
+            viewsP.textContent = viewText;
+
+            rightCell.appendChild(nameP);
+            rightCell.appendChild(viewsP);
+            gameidfk.appendChild(idCell);
+            gameidfk.appendChild(rightCell);
 
             gameidfk.addEventListener("click", () => {
               loadGame(gameObj.id).then((gameHtml) => {
@@ -777,42 +874,37 @@ all dirs:
             log(`Page ${currentPage} not found`, "warn");
           }
 
-          const searchInput = gameDiv.querySelector(".game-search-input");
-          if (searchInput) {
-            searchInput.addEventListener("input", (e) => {
-              const query = e.target.value.toLowerCase().trim();
+          searchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
 
-              const existingRows = gameDiv.querySelectorAll(".game");
-              existingRows.forEach((r) => r.remove());
+            const existingRows = gameDiv.querySelectorAll(".game");
+            existingRows.forEach((r) => r.remove());
 
-              const emptyMsg = gameDiv.querySelector(".search-empty");
-              if (emptyMsg) emptyMsg.remove();
+            const emptyMsg = gameDiv.querySelector(".search-empty");
+            if (emptyMsg) emptyMsg.remove();
 
-              const filtered = query
-                ? displayedGames.filter(
-                    (g) =>
-                      g.name.toLowerCase().includes(query) ||
-                      String(g.id).includes(query),
-                  )
-                : displayedGames;
+            const filtered = query
+              ? displayedGames.filter(
+                  (g) =>
+                    g.name.toLowerCase().includes(query) ||
+                    String(g.id).includes(query),
+                )
+              : displayedGames;
 
-              if (filtered.length === 0) {
-                const empty = document.createElement("p");
-                empty.classList.add("info", "search-empty");
-                empty.textContent = `no games matching "${query}"`;
-                gameDiv.appendChild(empty);
-              } else {
-                filtered.forEach((game) =>
-                  gameDiv.appendChild(renderGame(game)),
-                );
-              }
-            });
+            if (filtered.length === 0) {
+              const empty = document.createElement("p");
+              empty.classList.add("info", "search-empty");
+              empty.textContent = `no games matching "${query}"`;
+              gameDiv.appendChild(empty);
+            } else {
+              filtered.forEach((game) => gameDiv.appendChild(renderGame(game)));
+            }
+          });
 
-            searchInput.addEventListener("keydown", (e) => {
-              e.stopPropagation();
-              if (e.key === "Enter") e.preventDefault();
-            });
-          }
+          searchInput.addEventListener("keydown", (e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") e.preventDefault();
+          });
 
           loadTyper();
 
@@ -966,7 +1058,7 @@ function init(versionCheck) {
       }
     }
 
-    if (currentDir === "chat" && chatUsername) {
+    if (currentDir === "chat" && chatUsername && !currentRoom) {
       log(`chat: logged in as ${chatUsername}`, "info");
     }
 
@@ -1006,7 +1098,10 @@ function addUIElements() {
 
   const button4 = document.createElement("button");
   button4.classList.add("button-general", "button-log", "spotify");
-  button4.innerHTML = `<img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png"/>`;
+  const spotifyImg = document.createElement("img");
+  spotifyImg.src =
+    "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
+  button4.appendChild(spotifyImg);
   strip.appendChild(button4);
 
   button4.addEventListener("click", async function () {
@@ -1027,7 +1122,7 @@ function addUIElements() {
       const closeBtn = document.createElement("button");
       closeBtn.style.cssText =
         "position:fixed;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#000;color:#fff;font-size:18px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000;line-height:1;";
-      closeBtn.textContent = "×";
+      closeBtn.textContent = "\u00d7";
 
       const iframe = document.createElement("iframe");
       iframe.style.cssText = "width:100%;height:100%;border:none;";
@@ -1075,22 +1170,47 @@ function addUIElements() {
   button3.classList.add("button-general", "bypasser", "button-log");
 
   if (!bypassOn) {
-    button3.innerHTML = "<p>bypass: <span class='showerfalse'>off</span></p>";
+    const p = document.createElement("p");
+    p.appendChild(document.createTextNode("bypass: "));
+    const span = document.createElement("span");
+    span.classList.add("showerfalse");
+    span.textContent = "off";
+    p.appendChild(span);
+    button3.appendChild(p);
   } else {
-    button3.innerHTML = "<p>bypass: <span class='showertrue'>on</span></p>";
+    const p = document.createElement("p");
+    p.appendChild(document.createTextNode("bypass: "));
+    const span = document.createElement("span");
+    span.classList.add("showertrue");
+    span.textContent = "on";
+    p.appendChild(span);
+    button3.appendChild(p);
   }
   strip.appendChild(button3);
 
   button3.addEventListener("click", () => {
     button3.blur();
+    button3.innerHTML = "";
     if (bypassOn) {
       bypassOn = false;
-      button3.innerHTML = "<p>bypass: <span class='showerfalse'>off</span></p>";
+      const p = document.createElement("p");
+      p.appendChild(document.createTextNode("bypass: "));
+      const span = document.createElement("span");
+      span.classList.add("showerfalse");
+      span.textContent = "off";
+      p.appendChild(span);
+      button3.appendChild(p);
       log("bypass disabled", "info");
       loadTyper();
     } else {
       bypassOn = true;
-      button3.innerHTML = "<p>bypass: <span class='showertrue'>on</span></p>";
+      const p = document.createElement("p");
+      p.appendChild(document.createTextNode("bypass: "));
+      const span = document.createElement("span");
+      span.classList.add("showertrue");
+      span.textContent = "on";
+      p.appendChild(span);
+      button3.appendChild(p);
       alert(
         "fyi, bypasser is NOT reccomended for normal use, ONLY use if your tabs are being automatically closed (via stahmer patch)",
       );
@@ -1177,10 +1297,18 @@ function loadTyper() {
 
   const typing = document.createElement("div");
   typing.classList.add("typer");
-  typing.innerHTML = `<span class="input"></span><span class="cursor"></span>`;
 
-  const input = typing.querySelector(".input");
-  const cursor = typing.querySelector(".cursor");
+  const inputSpan = document.createElement("span");
+  inputSpan.classList.add("input");
+
+  const cursorSpan = document.createElement("span");
+  cursorSpan.classList.add("cursor");
+
+  typing.appendChild(inputSpan);
+  typing.appendChild(cursorSpan);
+
+  const input = inputSpan;
+  const cursor = cursorSpan;
 
   const handleTerminalLine = (e) => {
     if (chatInputEl && document.activeElement === chatInputEl) return;
