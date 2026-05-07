@@ -188,6 +188,10 @@ function connectSocket() {
     chatPrint(`@${from}: ${message}`, from === chatUsername ? "self" : "other");
   });
 
+  socket.on("image:receive", ({ from, dataUrl, mimeType }) => {
+    chatPrintImage(from, dataUrl, mimeType);
+  });
+
   socket.on("rooms:public", (publicRooms) => {
     renderRoomList(publicRooms);
   });
@@ -267,8 +271,39 @@ function openChatOverlay(name, code, roomUsers) {
     socket.emit("message:send", { roomCode: currentRoom, message: val });
   });
 
+  const imgInput = document.createElement("input");
+  imgInput.type = "file";
+  imgInput.accept = "image/png,image/jpeg,image/gif,image/webp";
+  imgInput.style.display = "none";
+  imgInput.addEventListener("change", () => {
+    const file = imgInput.files[0];
+    imgInput.value = "";
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      chatPrint("image too large (max 2 MB)", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      const mimeType = file.type;
+      socket.emit("image:send", { roomCode: currentRoom, dataUrl, mimeType });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const imgBtn = document.createElement("button");
+  imgBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+  imgBtn.classList.add("chat-overlay-img-btn");
+  imgBtn.title = "send image";
+  imgBtn.addEventListener("click", () => {
+    imgInput.click();
+  });
+
   inputRow.appendChild(label);
   inputRow.appendChild(field);
+  inputRow.appendChild(imgBtn);
+  inputRow.appendChild(imgInput);
 
   chatOverlay.appendChild(header);
   chatOverlay.appendChild(chatLog);
@@ -357,6 +392,38 @@ function chatPrint(text, type) {
   }
 
   chatLog.appendChild(line);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function chatPrintImage(from, dataUrl, mimeType) {
+  if (!chatLog) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.classList.add("chat-image-wrapper");
+
+  const nameSpan = document.createElement("span");
+  nameSpan.classList.add("chat-image-sender");
+  nameSpan.textContent = `@${from}`;
+  nameSpan.style.color = getUserColor(from);
+  nameSpan.style.fontWeight = "bold";
+
+  const img = document.createElement("img");
+  img.src = dataUrl;
+  img.classList.add("chat-image");
+  img.alt = `image from ${from}`;
+  img.style.maxWidth = "240px";
+  img.style.maxHeight = "240px";
+  img.style.display = "block";
+  img.style.marginTop = "4px";
+  img.style.borderRadius = "4px";
+  img.style.cursor = "pointer";
+  img.addEventListener("click", () => {
+    window.open(dataUrl, "_blank");
+  });
+
+  wrapper.appendChild(nameSpan);
+  wrapper.appendChild(img);
+  chatLog.appendChild(wrapper);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
@@ -732,6 +799,7 @@ all dirs:
         loadGame(pick.id).then((gameHtml) => {
           html = gameHtml;
           actuallyLaunch();
+          loadTyper();
         });
       })
       .catch((err) => {
