@@ -568,3 +568,38 @@ progress::-webkit-progress-bar {
 .game-search-input:focus {
   border-bottom-color: rgba(255, 255, 255, 0.6);
 }
+
+.chat-overlay-img-btn {
+  background: transparent;
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.chat-overlay-img-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.chat-overlay-img-btn:active {
+  transform: scale(0.95);
+}
+
+.chat-overlay-img-btn svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
