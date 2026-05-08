@@ -1176,5 +1176,31 @@
       "id": 281,
       "name": "Spaceflight Simulator"
     }
+  ],
+  "28": [
+    {
+      "id": 282,
+      "name": "Fancy Pants Adventure 2"
+    },
+    {
+      "id": 283,
+      "name": "Fancy Pants Adventure 3"
+    },
+    {
+      "id": 284,
+      "name": "Shootout Reloaded"
+    },
+    {
+      "id": 285,
+      "name": "Kirby Squeak Squad"
+    },
+    {
+      "id": 286,
+      "name": "Kirby Super Star"
+    },
+    {
+      "id": 287,
+      "name": "Web Dashers"
+    }
   ]
 }
