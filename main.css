@@ -337,12 +337,18 @@ progress::-webkit-progress-bar {
   bottom: 20px;
   right: 20px;
   z-index: 9999;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  grid-auto-rows: auto;
   gap: 10px;
+  max-height: 52px;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
 }
 
+#btn-strip:hover {
+  max-height: 400px;
+}
 .forum-button,
 .button-log,
 .bypasser,
@@ -602,4 +608,26 @@ progress::-webkit-progress-bar {
   width: 15px;
   height: 15px;
   display: block;
+}
+
+.ai-model-select {
+  flex: 1;
+  background: black;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font: inherit;
+  font-size: 0.75em;
+  padding: 2px 4px;
+  cursor: pointer;
+  outline: none;
+  max-width: 220px;
+}
+
+.ai-model-select:focus {
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.ai-model-select option {
+  background: black;
+  color: white;
 }
