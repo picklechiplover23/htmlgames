@@ -12,6 +12,21 @@ let currentDir = "root";
 let sorting = "abc";
 let currentTerminalHandler = null;
 let html;
+let aiOverlay = null;
+let aiLog = null;
+let aiInputEl = null;
+let aiDragging = false;
+let aiDragOffsetX = 0;
+let aiDragOffsetY = 0;
+let aiModel = "llama-3.3-70b-versatile";
+let aiHistory = [];
+const AI_MODELS = [
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+  "mixtral-8x7b-32768",
+  "gemma2-9b-it",
+];
+const AI_ENDPOINT = "http://localhost:3000/ai";
 const rootLink =
   "https://cdn.jsdelivr.net/gh/picklechiplover23/htmlgames@master/";
 const directories = ["root", "games", "gooner", "chat"];
@@ -264,6 +279,7 @@ function openChatOverlay(name, code, roomUsers) {
   chatInputEl = field;
 
   field.addEventListener("keydown", (e) => {
+    e.stopPropagation();
     if (e.key !== "Enter") return;
     const val = field.value.trim();
     field.value = "";
@@ -340,6 +356,190 @@ function closeChatOverlay() {
   chatOverlay = null;
   chatLog = null;
   chatInputEl = null;
+}
+
+function openAiOverlay() {
+  if (aiOverlay) return;
+
+  aiOverlay = document.createElement("div");
+  aiOverlay.classList.add("chat-overlay");
+
+  const header = document.createElement("div");
+  header.classList.add("chat-overlay-header");
+
+  const title = document.createElement("span");
+  title.textContent = "ai chat";
+  title.classList.add("chat-overlay-title");
+
+  const modelSelect = document.createElement("select");
+  modelSelect.classList.add("ai-model-select");
+  AI_MODELS.forEach((m) => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    if (m === aiModel) opt.selected = true;
+    modelSelect.appendChild(opt);
+  });
+  modelSelect.addEventListener("change", () => {
+    aiModel = modelSelect.value;
+  });
+  modelSelect.addEventListener("mousedown", (e) => e.stopPropagation());
+  modelSelect.addEventListener("keydown", (e) => e.stopPropagation());
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "close";
+  closeBtn.classList.add("chat-overlay-leave");
+  closeBtn.addEventListener("click", closeAiOverlay);
+
+  header.appendChild(title);
+  header.appendChild(modelSelect);
+  header.appendChild(closeBtn);
+
+  aiLog = document.createElement("div");
+  aiLog.classList.add("chat-overlay-log");
+
+  const inputRow = document.createElement("div");
+  inputRow.classList.add("chat-overlay-input-row");
+
+  const label = document.createElement("span");
+  label.classList.add("chat-overlay-prompt");
+  label.textContent = "chud$ ";
+
+  const field = document.createElement("input");
+  field.type = "text";
+  field.classList.add("chat-overlay-field");
+  field.autocomplete = "off";
+  field.spellcheck = false;
+  aiInputEl = field;
+
+  field.addEventListener("keydown", async (e) => {
+    e.stopPropagation();
+    if (e.key !== "Enter") return;
+    const val = field.value.trim();
+    if (!val) return;
+    field.value = "";
+    field.disabled = true;
+
+    aiPrint(`chud: ${val}`, "self");
+    aiHistory.push({ role: "user", content: val });
+
+    const thinking = document.createElement("pre");
+    thinking.textContent = "ai: thinking...";
+    thinking.classList.add("info");
+    aiLog.appendChild(thinking);
+    aiLog.scrollTop = aiLog.scrollHeight;
+
+    try {
+      const res = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: aiModel, messages: aiHistory }),
+      });
+      const data = await res.json();
+      thinking.remove();
+      if (!res.ok) {
+        aiPrint(`error: ${data.error || "unknown error"}`, "error");
+        aiHistory.pop();
+      } else {
+        const reply = data.content || "";
+        aiHistory.push({ role: "assistant", content: reply });
+        aiPrint(`ai: ${reply}`, "other");
+      }
+    } catch (err) {
+      thinking.remove();
+      aiPrint(`error: ${err.message}`, "error");
+      aiHistory.pop();
+    }
+
+    field.disabled = false;
+    field.focus();
+  });
+
+  const clearBtn = document.createElement("button");
+  clearBtn.textContent = "clear";
+  clearBtn.classList.add("chat-overlay-img-btn");
+  clearBtn.style.width = "auto";
+  clearBtn.style.padding = "0 8px";
+  clearBtn.style.fontSize = "0.75em";
+  clearBtn.addEventListener("click", () => {
+    aiHistory = [];
+    aiLog.innerHTML = "";
+    aiPrint("context cleared", "info");
+  });
+  clearBtn.addEventListener("mousedown", (e) => e.stopPropagation());
+
+  inputRow.appendChild(label);
+  inputRow.appendChild(field);
+  inputRow.appendChild(clearBtn);
+
+  aiOverlay.appendChild(header);
+  aiOverlay.appendChild(aiLog);
+  aiOverlay.appendChild(inputRow);
+  document.body.appendChild(aiOverlay);
+
+  header.addEventListener("mousedown", (e) => {
+    if (
+      e.target === closeBtn ||
+      e.target === modelSelect ||
+      e.target === clearBtn
+    )
+      return;
+    aiDragging = true;
+    const rect = aiOverlay.getBoundingClientRect();
+    aiDragOffsetX = e.clientX - rect.left;
+    aiDragOffsetY = e.clientY - rect.top;
+    aiOverlay.style.transition = "none";
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!aiDragging) return;
+    aiOverlay.style.left = `${e.clientX - aiDragOffsetX}px`;
+    aiOverlay.style.top = `${e.clientY - aiDragOffsetY}px`;
+    aiOverlay.style.transform = "none";
+  });
+
+  document.addEventListener("mouseup", () => {
+    aiDragging = false;
+  });
+
+  setTimeout(() => field.focus(), 0);
+}
+
+function closeAiOverlay() {
+  if (!aiOverlay) return;
+  aiOverlay.remove();
+  aiOverlay = null;
+  aiLog = null;
+  aiInputEl = null;
+}
+
+function aiPrint(text, type) {
+  if (!aiLog) return;
+  const line = document.createElement("pre");
+  if (type === "error") {
+    line.textContent = text;
+    line.classList.add("error");
+  } else if (type === "info") {
+    line.textContent = text;
+    line.classList.add("info");
+  } else {
+    const colonIdx = text.indexOf(": ");
+    if (colonIdx > 0) {
+      const who = text.slice(0, colonIdx);
+      const body = text.slice(colonIdx + 2);
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = who + ": ";
+      nameSpan.style.fontWeight = "bold";
+      nameSpan.style.color = type === "self" ? "rgb(139, 253, 139)" : "#61afef";
+      line.appendChild(nameSpan);
+      line.appendChild(document.createTextNode(body));
+    } else {
+      line.textContent = text;
+    }
+  }
+  aiLog.appendChild(line);
+  aiLog.scrollTop = aiLog.scrollHeight;
 }
 
 function chatPrint(text, type) {
@@ -709,6 +909,11 @@ all dirs:
         loadTyper();
       }
     });
+  },
+
+  ai: () => {
+    openAiOverlay();
+    loadTyper();
   },
 
   create: (args) => {
@@ -1126,10 +1331,6 @@ function init(versionCheck) {
       }
     }
 
-    if (currentDir === "chat" && chatUsername && !currentRoom) {
-      log(`chat: logged in as ${chatUsername}`, "info");
-    }
-
     log("warn: report issues to amir", "warn");
     loadTyper();
   }, 700);
@@ -1213,26 +1414,17 @@ function addUIElements() {
     }
   });
 
-  const dlBtn = document.createElement("a");
-  dlBtn.classList.add("button-general", "button-log", "dl-latest");
-  dlBtn.textContent = "download latest";
-  dlBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
+  const chatSHit = document.createElement("button");
+  chatSHit.classList.add("button-general", "button-log", "dl-latest");
+  chatSHit.textContent = "chat";
+  chatSHit.addEventListener("click", async (e) => {
+    currentDir = "chat";
     alert(
-      "fyi, ONLY use this if you have the broken ui, dont use this every update (sfools almost always auto updates)",
+      "to use chat do name {username} to set ur user ls chat to see all chatrooms and create {roomname} public or private to make a room and use join {code} for private chatrooms. enjoy!",
     );
-    const res = await fetch(
-      "https://cdn.jsdelivr.net/gh/blahjbutbetter/aedfgdfg/Legacy.html",
-    );
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Legacy.html";
-    a.click();
-    URL.revokeObjectURL(url);
+    init();
   });
-  strip.appendChild(dlBtn);
+  strip.appendChild(chatSHit);
 
   const button3 = document.createElement("button");
   button3.classList.add("button-general", "bypasser", "button-log");
@@ -1309,6 +1501,15 @@ function addUIElements() {
       "_blank",
     );
   });
+
+  const aiBtn = document.createElement("button");
+  aiBtn.classList.add("button-general", "button-log", "dl-latest");
+  aiBtn.textContent = "ai";
+  aiBtn.addEventListener("click", () => {
+    aiBtn.blur();
+    openAiOverlay();
+  });
+  strip.appendChild(aiBtn);
 }
 
 function log(text, type) {
@@ -1380,6 +1581,7 @@ function loadTyper() {
 
   const handleTerminalLine = (e) => {
     if (chatInputEl && document.activeElement === chatInputEl) return;
+    if (aiInputEl && document.activeElement === aiInputEl) return;
     if (e.key.length === 1) input.textContent += e.key;
     else if (e.key === "Backspace")
       input.textContent = input.textContent.slice(0, -1);
