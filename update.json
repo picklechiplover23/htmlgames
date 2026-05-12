@@ -1,10 +1,9 @@
 {
-  "version": "1.3.2",
-  "tip": "ADDED PEAK GAMES",
+  "version": "1.4.0",
+  "tip": "a LOT of shittify songs and AII",
   "list": [
-    "added 3+ games",
-    "added gta vice city, just shapes and beats",
-    "UPDATED AGES OF CONFLICT TO NEWEST STEAM VERSION (also fire)",
-    "fixed shittify cacheing issue (youll see new releases now :)"
+    "added 4+ games",
+    "added shittify songs (some songs didnt get fully added causee bug will fix later prolly)",
+    "added AI",
   ]
 }
