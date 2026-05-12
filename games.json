@@ -1213,6 +1213,24 @@
     {
       "id": 290,
       "name": "GTA Vice City"
+    },
+    {
+      "id": 291,
+      "name": "Solar Smash"
+    }
+  ],
+  "29": [
+    {
+      "id": 292,
+      "name": "GTA Chinatown Wars"
+    },
+    {
+      "id": 293,
+      "name": "GTA Sand Andreas "
+    },
+    {
+      "id": 294,
+      "name": "20 Minutes Till Dawn"
     }
   ]
 }
