@@ -7,7 +7,7 @@
 
     function launch() {
       try {
-        fetch("https://cdn.jsdelivr.net/gh/regedit-sys/web-port@main/deltarune/free.html?t="+Date.now())
+        fetch("https://gcore.jsdelivr.net/gh/regedit-sys/web-port@main/deltarune/free.html?t="+Date.now())
           .then(response => response.text())
           .then(html => {
                 document.documentElement.innerHTML = html;

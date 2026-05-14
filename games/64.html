@@ -1,11 +1,10 @@
 <html lang="en">
 <head>
-  <base href="https://cdn.jsdelivr.net/gh/gn-math/assets@main/311/">
+  <base href="https://gcore.jsdelivr.net/gh/gn-math/assets@main/311/">
   <!--v0.4-->
   <title>SANDTRIS</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
-  <script src="sketch.js"></script>
+  <script src="http://127.0.0.1:5500/sketch.js"></script>
   <link rel="icon" type="image/x-icon" href="favicon.png">
   <link rel="stylesheet" type="text/css" href="style.css">
   <meta charset="utf-8" />
@@ -112,11 +111,11 @@
           <div style="display: grid; width:300px; grid-template-columns: auto auto;">
             <div>
               <p id="musicText" style="margin:0px; padding:5px;">MUS</p>
-              <input style="width:120px" type="range" min="0" max="10" value="1" class="slider" id="mus1Slider" onchange="MUSvolume(this.value)"/>
+              <input style="width:120px" type="range" min="0" max="10" value="1" class="slider" id="mus1Slider" />
             </div>
             <div>
               <p id="soundText" style="margin:0px; padding:5px;">SFX</p>
-              <input style="width:120px" type="range" min="0" max="10" value="1" class="slider" id="sfx1Slider" onchange="SFXvolume(this.value)"/>
+              <input style="width:120px" type="range" min="0" max="10" value="1" class="slider" id="sfx1Slider"/>
             </div>
           </div>
 		  <p style="font-size: 12px; color:bisque">now works on mobile!</p>
@@ -133,10 +132,10 @@
           <button type="button" class="bluebutton" onClick="newGame()">NEW GAME</button>
           <br/><br/>
           MUS
-          <input style="width:80px" type="range" min="0" max="10" value="1" class="slider" id="mus2Slider" onchange="MUSvolume(this.value)"/>
+          <input style="width:80px" type="range" min="0" max="10" value="1" class="slider" id="mus2Slider"/>
           <br/>
           SFX
-          <input style="width:80px" type="range" min="0" max="10" value="0.5" class="slider" id="sfx2Slider" onchange="SFXvolume(this.value)"/>
+          <input style="width:80px" type="range" min="0" max="10" value="0.5" class="slider" id="sfx2Slider" />
         </div>
       </dialog>
 

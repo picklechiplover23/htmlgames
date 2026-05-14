@@ -6,7 +6,7 @@
     <script>
         window.gameconfig = {
             name: "Grand Theft Auto - Chinatown Wars (USA)",
-            url: "https://cdn.jsdelivr.net/gh/martinmmcyt/gta@main/grand-theft-auto-chinatown-wars/files/Grand%20Theft%20Auto%20-%20Chinatown%20Wars%20(USA)%20(En%2CFr%2CDe%2CEs%2CIt).nds",
+            url: "https://gcore.jsdelivr.net/gh/martinmmcyt/gta@main/grand-theft-auto-chinatown-wars/files/Grand%20Theft%20Auto%20-%20Chinatown%20Wars%20(USA)%20(En%2CFr%2CDe%2CEs%2CIt).nds",
             core: "nds",
             min: 1,
             max: 7,
@@ -109,11 +109,11 @@
                 EJS_gameName = window.gameconfig.name;
                 EJS_color = "#0064ff";
                 EJS_startOnLoaded = true;
-                EJS_pathtodata = "https://cdn.jsdelivr.net/gh/martinmmcyt/emulatorjs@master/";
+                EJS_pathtodata = "https://gcore.jsdelivr.net/gh/martinmmcyt/emulatorjs@master/";
                 EJS_gameUrl = gameUrl;
                 const script = document.createElement("script");
                 script.src =
-                    "https://cdn.jsdelivr.net/gh/martinmmcyt/emulatorjs@master/loader.js";
+                    "https://gcore.jsdelivr.net/gh/martinmmcyt/emulatorjs@master/loader.js";
                 document.body.appendChild(script);
             })
             .catch((error) => {

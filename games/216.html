@@ -84,8 +84,8 @@
                 EJS_core = "parallel_n64";
                 EJS_color = "#000000";
                 EJS_startOnLoaded = true;
-                EJS_pathtodata = "https://cdn.jsdelivr.net/gh/genizy/emu@master/";
-                EJS_gameUrl = "https://cdn.jsdelivr.net/gh/schoolstuff1337/supplies@main/n64/Animal%20Forest%20(Japan)%20%5BT-En%20by%20Zoinkity%20v021210%5D%20%5Bi%5D%20%5Bn%5D.zip";
+                EJS_pathtodata = "https://gcore.jsdelivr.net/gh/genizy/emu@master/";
+                EJS_gameUrl = "https://gcore.jsdelivr.net/gh/schoolstuff1337/supplies@main/n64/Animal%20Forest%20(Japan)%20%5BT-En%20by%20Zoinkity%20v021210%5D%20%5Bi%5D%20%5Bn%5D.zip";
                 EJS_defaultOptions = {
         vsync: "disabled"
 }
@@ -94,10 +94,10 @@
             document.getElementById("startButton").addEventListener("click", startGame);
             function loadGame() {
                 var script = document.createElement("script");
-                script.src = "https://cdn.jsdelivr.net/gh/genizy/emu@master/loader.js";
+                script.src = "https://gcore.jsdelivr.net/gh/genizy/emu@master/loader.js";
                 document.body.appendChild(script);
 		var script = document.createElement("script");
-                script.src = "https://cdn.jsdelivr.net/gh/a456pur/seraph@ae2fcc6d6a9cd051654fcc0519080db1f79cf2a7/storage/js/cloak.js";
+                script.src = "https://gcore.jsdelivr.net/gh/a456pur/seraph@ae2fcc6d6a9cd051654fcc0519080db1f79cf2a7/storage/js/cloak.js";
                 document.body.appendChild(script);
             }
 	</script>

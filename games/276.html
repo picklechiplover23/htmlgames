@@ -9,7 +9,7 @@
     <script>
       window.gameconfig = {
         name: "Phoenix Wright - Ace Attorney (USA)",
-        url: "https://cdn.jsdelivr.net/gh/bubbls/ugss@e27ad66eda838f123bfb1aff7958bbda703283f5/Phoenix%20Wright%20-%20Ace%20Attorney%20(USA)/Phoenix%20Wright%20-%20Ace%20Attorney%20(USA).nds",
+        url: "https://gcore.jsdelivr.net/gh/bubbls/ugss@e27ad66eda838f123bfb1aff7958bbda703283f5/Phoenix%20Wright%20-%20Ace%20Attorney%20(USA)/Phoenix%20Wright%20-%20Ace%20Attorney%20(USA).nds",
         core: "nds",
         min: 1,
         max: 4,
@@ -109,11 +109,11 @@ getParts("asd.js", 0, 100)
           EJS_gameName = window.gameconfig.name;
           EJS_color = "#0064ff";
           EJS_startOnLoaded = true;
-          EJS_pathtodata = "https://cdn.jsdelivr.net/gh/genizy/emu@master/";
+          EJS_pathtodata = "https://gcore.jsdelivr.net/gh/genizy/emu@master/";
           EJS_gameUrl = gameUrl;
           const script = document.createElement("script");
           script.src =
-            "https://cdn.jsdelivr.net/gh/genizy/emu@master/loader.js";
+            "https://gcore.jsdelivr.net/gh/genizy/emu@master/loader.js";
           document.body.appendChild(script);
         })
         .catch((error) => {

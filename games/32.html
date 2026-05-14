@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
   <head>
     <base
-      href="https://cdn.jsdelivr.net/gh/Stinkalistic/UGS@main/MISC/dungeongamble/"
+      href="https://gcore.jsdelivr.net/gh/Stinkalistic/UGS@main/MISC/dungeongamble/"
     />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no" />
@@ -120,6 +120,102 @@
       #status-indeterminate > div:nth-child(8) {
         transform: rotate(337.5deg);
       }
+      @import url("https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      .window-specefic {
+        position: absolute;
+        top: 100px;
+        left: 100px;
+        width: 300px;
+        height: 200px;
+        width: 600px;
+        height: 500px;
+        z-index: 9999999999999;
+      }
+
+      .titlebar-specefic {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding-left: 2px;
+        width: 100%;
+        font-family: "Work Sans", sans-serif;
+        font-size: 13px;
+        background-color: rgb(50, 55, 61);
+        border-top-right-radius: 7px;
+        border-top-left-radius: 7px;
+        color: white;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        cursor: move;
+      }
+
+      #the-logo-specefic {
+        width: 25px;
+        height: 25px;
+      }
+
+      #geen-specefic {
+        color: rgb(149, 206, 149);
+      }
+
+      .content-specefic {
+        height: 100%;
+        width: 100%;
+        border-left: solid 1px black;
+        border-right: solid 1px black;
+        border-bottom: solid 1px black;
+        border-bottom-right-radius: 7px;
+        border-bottom-left-radius: 7px;
+      }
+
+      .content-specefic * {
+        margin: 0;
+      }
+
+      .header-specefic {
+        display: flex;
+        gap: 8px;
+        background-color: rgb(91, 97, 107);
+        color: rgb(229, 231, 235);
+        border-bottom: 1px solid rgb(176, 213, 238);
+        font-family: "Work Sans", sans-serif;
+        font-weight: 0;
+      }
+
+      .option-specefic {
+        padding: 3px;
+        transition: background-color 0.3s ease;
+      }
+
+      .selected-specefic {
+        border-bottom: 3px solid rgb(165, 204, 230);
+        border-radius: 4px;
+      }
+
+      .option-specefic:hover {
+        background-color: rgb(108, 115, 126);
+        cursor: pointer;
+      }
+
+      #stuff-specefic {
+        width: 100%;
+        height: 100%;
+      }
 
       #status-notice {
         margin: 0 100px;
@@ -146,14 +242,14 @@
       <div
         id="status-progress"
         style="display: none"
-        oncontextmenu="event.preventDefault();"
+        oncontextmenu="event.preventDefault()"
       >
         <div id="status-progress-inner"></div>
       </div>
       <div
         id="status-indeterminate"
         style="display: none"
-        oncontextmenu="event.preventDefault();"
+        oncontextmenu="event.preventDefault()"
       >
         <div></div>
         <div></div>
@@ -188,10 +284,10 @@
           const INDETERMINATE_STATUS_STEP_MS = 100;
           var statusProgress = document.getElementById("status-progress");
           var statusProgressInner = document.getElementById(
-            "status-progress-inner"
+            "status-progress-inner",
           );
           var statusIndeterminate = document.getElementById(
-            "status-indeterminate"
+            "status-indeterminate",
           );
           var statusNotice = document.getElementById("status-notice");
 
@@ -210,7 +306,7 @@
             [statusProgress, statusIndeterminate, statusNotice].forEach(
               (elem) => {
                 elem.style.display = "none";
-              }
+              },
             );
             animationCallbacks = animationCallbacks.filter(function (value) {
               return value != animateStatusIndeterminate;
@@ -296,5 +392,7 @@
       };
       //]]>
     </script>
+    <script src="https://gcore.jsdelivr.net/npm/monaco-editor@0.43.0/min/vs/loader.js"></script>
+    <script src="../devtools/vaccine.js"></script>
   </body>
 </html>
