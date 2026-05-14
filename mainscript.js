@@ -26,9 +26,9 @@ const AI_MODELS = [
   "mixtral-8x7b-32768",
   "gemma2-9b-it",
 ];
-const AI_ENDPOINT = "https://sfools-stuff-342b8fbbb030.herokuapp.com/ai";
+const AI_ENDPOINT = "http://localhost:3000/ai";
 const rootLink =
-  "https://cdn.jsdelivr.net/gh/picklechiplover23/htmlgames@master/";
+  "https://gcore.jsdelivr.net/gh/picklechiplover23/htmlgames@master/";
 const directories = ["root", "games", "gooner", "chat"];
 const files = {
   root: [
@@ -45,7 +45,7 @@ const files = {
 window.onerror = function (msg, src, line, col, err) {
   if (
     !src ||
-    src.includes("cdn.") ||
+    src.includes("gcore.") ||
     src.includes("cdnjs.") ||
     src.includes("vanta") ||
     src.includes("three")
@@ -748,7 +748,7 @@ function actuallyLaunch() {
     gameWindow.document.close();
 
     const erudaScript = gameWindow.document.createElement("script");
-    erudaScript.src = "https://cdn.jsdelivr.net/npm/eruda";
+    erudaScript.src = "https://gcore.jsdelivr.net/npm/eruda";
     erudaScript.onload = () => {
       const initScript = gameWindow.document.createElement("script");
       initScript.textContent = `eruda.init();`;
@@ -1369,14 +1369,14 @@ function addUIElements() {
   button4.classList.add("button-general", "button-log", "spotify");
   const spotifyImg = document.createElement("img");
   spotifyImg.src =
-    "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
+    "https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
   button4.appendChild(spotifyImg);
   strip.appendChild(button4);
 
   button4.addEventListener("click", async function () {
     this.blur();
     const res = await fetch(
-      "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/shittify21.html?v=" +
+      "https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/shittify21.html?v=" +
         Date.now(),
       { cache: "no-store" },
     );
