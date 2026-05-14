@@ -1357,7 +1357,7 @@ async function getViews() {
 
 function getViewsForGame(id) {
   if (!viewJSON) return 0;
-  return viewJSON[`/games/${id}.html`]?.total ?? 0;
+  return viewJSON[`/games2/${id}.html`]?.total ?? 0;
 }
 
 function addUIElements() {
@@ -1624,7 +1624,7 @@ async function loadJSON() {
 async function loadGame(id) {
   try {
     const response = await fetch(
-      `${rootLink}games/${id}.html?v=${Date.now()}`,
+      `${rootLink}games2/${id}.html?v=${Date.now()}`,
       { cache: "no-store" },
     );
     if (!response.ok) throw new Error("network error");
