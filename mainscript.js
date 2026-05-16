@@ -26,9 +26,8 @@ const AI_MODELS = [
   "mixtral-8x7b-32768",
   "gemma2-9b-it",
 ];
-const AI_ENDPOINT = "http://localhost:3000/ai";
-const rootLink =
-  "https://gcore.jsdelivr.net/gh/picklechiplover23/htmlgames@master/";
+const AI_ENDPOINT = "https://sfools-stuff-342b8fbbb030.herokuapp.com/ai";
+const rootLink = `https://gcore.jsdelivr.net/gh/picklechiplover23/htmlgames@${commitHash}/`;
 const directories = ["root", "games", "gooner", "chat"];
 const files = {
   root: [
