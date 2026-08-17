@@ -1,9 +1,12 @@
 {
-  "version": "1.4.0",
-  "tip": "a LOT of shittify songs and AII",
+  "version": "2.0.0",
+  "tip": "sfools v2!!! sorry if the update isnt as big as you hoped i was hoping for a ui rework but i cant think of a good ui design.",
   "list": [
-    "added 4+ games",
-    "added shittify songs (some songs didnt get fully added cause bug will fix later prolly)",
-    "added AI"
+    "added 10+ popular games",
+    "added a bunch of shittify songs",
+    "ADDED MOVIES AND SHOWS WORKING!",
+    "added intro and tutorial",
+    "fixed double btn-strip bug",
+    "was gonna do a code refactor but.."
   ]
 }
