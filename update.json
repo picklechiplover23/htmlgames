@@ -1,9 +1,12 @@
 {
-  "version": "1.4.1",
-  "tip": "patched/bypassed lightspeds shit block games should work now (a lot of songs, and games wont work this is because sfools hoster being ddosed not a sfools iusse)",
+  "version": "2.0.0",
+  "tip": "sfools v2!!! sorry if the update isnt as big as you hoped i was hoping for a ui rework but i cant think of a good ui design.",
   "list": [
-    "patched fixed",
-    "fixed age of conflicts",
-    "nothing else (finals week is near and I dont have time to work on sfools)"
+    "added 10+ popular games",
+    "added a bunch of shittify songs",
+    "ADDED MOVIES AND SHOWS WORKING!",
+    "added intro and tutorial",
+    "fixed double btn-strip bug",
+    "was gonna do a code refactor but.."
   ]
 }
