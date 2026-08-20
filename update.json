@@ -1,12 +1,7 @@
 {
-  "version": "2.0.0",
-  "tip": "sfools v2!!! sorry if the update isnt as big as you hoped i was hoping for a ui rework but i cant think of a good ui design.",
+  "version": "2.0.1",
+  "tip": "proxy browser soon because the search restrictions are horrible",
   "list": [
-    "added 10+ popular games",
-    "added a bunch of shittify songs",
-    "ADDED MOVIES AND SHOWS WORKING!",
-    "added intro and tutorial",
-    "fixed double btn-strip bug",
-    "was gonna do a code refactor but.."
+    "fixed ai"
   ]
 }
