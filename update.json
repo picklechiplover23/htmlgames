@@ -1,12 +1,9 @@
 {
-  "version": "2.0.0",
-  "tip": "sfools v2!!! sorry if the update isnt as big as you hoped i was hoping for a ui rework but i cant think of a good ui design.",
+  "version": "2.1.0",
+  "tip": "PLEASE let algebra 2 be easy today",
   "list": [
-    "added 10+ popular games",
-    "added a bunch of shittify songs",
-    "ADDED MOVIES AND SHOWS WORKING!",
-    "added intro and tutorial",
-    "fixed double btn-strip bug",
-    "was gonna do a code refactor but.."
+    "added 3 popular games",
+    "fixed a lot of the broken games (still need a lot more fixed)",
+    "manually removed a lot of ads from games"
   ]
 }

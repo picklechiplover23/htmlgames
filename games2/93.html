@@ -1,9 +1,14 @@
-<!doctype html>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L7856P3VNT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-L7856P3VNT');
+</script><!DOCTYPE html>
 <html lang="en" style="--ui-scale: 1.33">
   <head>
-    <base
-      href="https://gcore.jsdelivr.net/gh/genizy/google-class@main/shapezio/"
-    />
+    <base href="https://cdn.jsdelivr.net/gh/taskmaster773/google-class@main/shapezio/">
     <title>shapez Demo - Factory Automation Game</title>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
     <link
@@ -283,7 +288,45 @@
       #ll_preload_error > .inner .source {
         color: #777;
       }
-    </style>
+    #sidebarad1,
+#sidebarad2 {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  height: 600px;
+  padding: 0;
+  margin: 0;
+  z-index: 999999;
+}
+#sidebarad1 {
+  left: 0;
+}
+#sidebarad2 {
+  right: 0;
+}
+.sidebar-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  z-index: 10;
+}
+.sidebar-frame {
+  width: 160px;
+  height: 600px;
+  border: none;
+  display: block;
+}
+</style>
     <script type="text/javascript">
       var bundleSrc = "v/b07e04e7/bundle.js";
       (function () {
@@ -305,7 +348,7 @@
 
           if (
             ("" + event).indexOf(
-              "Cannot read property 'postMessage' of null",
+              "Cannot read property 'postMessage' of null"
             ) >= 0
           ) {
             console.warn("Safari can not read post message error:", event);
@@ -381,7 +424,7 @@
           console.log(
             "👀 Core responded at",
             Math.floor(performance.now()),
-            "ms",
+            "ms"
           );
           clearTimeout(loadTimeout);
           loadTimeout = null;
@@ -420,7 +463,7 @@
           xhr.onloadend = function () {
             if (!xhr.status.toString().match(/^2/)) {
               throw new Error(
-                "Failed to load bundle: " + xhr.status + " " + xhr.statusText,
+                "Failed to load bundle: " + xhr.status + " " + xhr.statusText
               );
             } else {
               if (!notifiedNotComputable) {
@@ -453,7 +496,7 @@
     </script>
   </head>
 
-  <body oncontextmenu="return !1;" style="background: #393747">
+  <body oncontextmenu="return!1" style="background: #393747">
     <div id="ll_fp">_</div>
     <div id="ll_p">
       <div id="ll_logo">
@@ -477,5 +520,5 @@
         </div>
       </div>
     </div>
-  </body>
+
 </html>
