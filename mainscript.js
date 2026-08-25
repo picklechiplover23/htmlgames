@@ -1,2 +1,2 @@
 document.body.innerHTML =
-  "<h1>Farewell! (for now)</h1> <p>Thank you all for supporting SFools and using it throughout this year. Since it's the end of the school year I'm assuming you guys won't need or use sfools over the summer so I will be shutting it down for now (if you REALLY still want to use it dm me on discord my user is sexyplankton.com) BUT it will be back at the start of next year bigger and better with a full revamp becoming SFools V2!. for the meantime, goodbye!</p> <h3>(if ur wondering why im even shutting it down in the first place, its cause I dont want the school to inspect the code over the summer and block it)</h3>";
+  "<h1>Get new version</h1> <p>SFools V2 is out and ur gonna need the new html file for the new new stuff, get it from amir</p>";
