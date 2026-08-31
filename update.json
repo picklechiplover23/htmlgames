@@ -1,9 +1,8 @@
 {
-  "version": "2.1.0",
-  "tip": "PLEASE let algebra 2 be easy today",
+  "version": "2.1.1",
+  "tip": "bleh",
   "list": [
-    "added 3 popular games",
-    "fixed a lot of the broken games (still need a lot more fixed)",
-    "manually removed a lot of ads from games"
+    "fixed foolflix searching ( u can now search shows )",
+    "fixed balatro"
   ]
 }
