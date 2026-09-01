@@ -1,9 +1,10 @@
 {
-  "version": "2.1.0",
-  "tip": "PLEASE let algebra 2 be easy today",
+  "version": "2.1.2",
+  "tip": "bleh v2",
   "list": [
-    "added 3 popular games",
-    "fixed a lot of the broken games (still need a lot more fixed)",
-    "manually removed a lot of ads from games"
+    "fixed ice dodo",
+    "fixed minecraft and minecraft alpha",
+    "fixed numby number factory",
+    "added 9+ games"
   ]
 }

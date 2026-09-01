@@ -1252,6 +1252,79 @@
         </div>
       </div>
     </div>
+    <script>
+      const OLD = "https://cdn.jsdelivr.net/gh/genizy/ice-dodo/";
+      const NEW = "https://cdn.jsdelivr.net/gh/bubblfan/ice-dodo/";
+
+      function rewriteURL(url) {
+        if (typeof url !== "string") return url;
+
+        return url.replaceAll(OLD, NEW);
+      }
+
+      // fetch
+      const originalFetch = window.fetch;
+      window.fetch = function (input, init) {
+        if (typeof input === "string") input = rewriteURL(input);
+
+        if (input instanceof Request) {
+          const newUrl = rewriteURL(input.url);
+          if (newUrl !== input.url) {
+            input = new Request(newUrl, input);
+          }
+        }
+
+        return originalFetch.call(this, input, init);
+      };
+
+      // XMLHttpRequest
+      const originalXHROpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url, ...args) {
+        return originalXHROpen.call(this, method, rewriteURL(url), ...args);
+      };
+
+      // Intercept element.setAttribute("src", ...)
+      const originalSetAttribute = Element.prototype.setAttribute;
+      Element.prototype.setAttribute = function (name, value) {
+        if ((name === "src" || name === "href") && typeof value === "string") {
+          value = rewriteURL(value);
+        }
+
+        return originalSetAttribute.call(this, name, value);
+      };
+
+      // Intercept script.src = ...
+      const scriptSrc = Object.getOwnPropertyDescriptor(
+        HTMLScriptElement.prototype,
+        "src",
+      );
+
+      Object.defineProperty(HTMLScriptElement.prototype, "src", {
+        get: scriptSrc.get,
+        set(value) {
+          return scriptSrc.set.call(this, rewriteURL(value));
+        },
+      });
+
+      // Intercept image.src, iframe.src, etc.
+      for (const proto of [
+        HTMLImageElement.prototype,
+        HTMLIFrameElement.prototype,
+        HTMLAudioElement.prototype,
+        HTMLVideoElement.prototype,
+      ]) {
+        const descriptor = Object.getOwnPropertyDescriptor(proto, "src");
+
+        if (!descriptor?.set) continue;
+
+        Object.defineProperty(proto, "src", {
+          get: descriptor.get,
+          set(value) {
+            return descriptor.set.call(this, rewriteURL(value));
+          },
+        });
+      }
+    </script>
     <script
       type="text/javascript"
       src="https://cdn.jsdelivr.net/gh/bubblfan/ice-dodo@b950830c255518c930fbc2a0bd3182e7d4cc920c/libs/babylon.js"
