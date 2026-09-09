@@ -1,10 +1,10 @@
 {
-  "version": "2.2.0",
-  "tip": "bleh v2",
+  "version": "2.3.0",
+  "tip": "GOLDEN AGE OF FOOLFLIX!",
   "list": [
-    "fixed ice dodo",
-    "fixed minecraft and minecraft alpha",
-    "fixed numby number factory",
-    "added 9+ games"
+    "new major source for foolflix",
+    "fixed stutering, bunch of new sources",
+    "fixed movie and show crashing",
+    "captions added (very buggy wip)
   ]
 }
