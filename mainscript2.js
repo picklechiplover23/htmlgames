@@ -1832,6 +1832,48 @@ function addUIElements() {
     }
   });
   strip.appendChild(moviesBtn);
+
+  const cloudBtn = document.createElement("button");
+  cloudBtn.classList.add("button-general", "button-log");
+  cloudBtn.textContent = "cloud gaming";
+  cloudBtn.addEventListener("click", async () => {
+    cloudBtn.blur();
+    const shittifyBaseUrl = await pickShittifyBase();
+    const res = await fetch(`${shittifyBaseUrl}/cloud.html?v=${Date.now()}`, {
+      cache: "no-store",
+    });
+    const pageHtml = await res.text();
+
+    if (bypassOn) {
+      const overlay = document.createElement("div");
+      overlay.id = "bypass-overlay";
+      overlay.classList.add("bypass-overlay");
+
+      const closeBtn = document.createElement("button");
+      closeBtn.classList.add("bypass-close-btn");
+      closeBtn.textContent = "\u00d7";
+
+      const iframe = document.createElement("iframe");
+      iframe.classList.add("bypass-iframe");
+      iframe.srcdoc = pageHtml;
+
+      overlay.appendChild(iframe);
+      document.body.appendChild(overlay);
+      document.body.appendChild(closeBtn);
+
+      closeBtn.addEventListener("click", () => {
+        overlay.remove();
+        closeBtn.remove();
+      });
+    } else {
+      const w = window.open("", "_blank");
+      if (!w) return;
+      w.document.open();
+      w.document.write(pageHtml);
+      w.document.close();
+    }
+  });
+  strip.appendChild(cloudBtn);
 }
 
 function log(text, type) {
