@@ -1,10 +1,9 @@
 {
-  "version": "2.3.0",
-  "tip": "GOLDEN AGE OF FOOLFLIX!",
+  "version": "2.4.0",
+  "tip": "holy... ADDED RIMWORLD AND CLOUD GAMING!!",
   "list": [
-    "new major source for foolflix",
-    "fixed stutering, bunch of new sources",
-    "fixed movie and show crashing",
-    "captions added (very buggy wip)"
+    "RIMWORLD PORT+",
+    "CLOUD GAMING! ADDED LOOK AT BOTTOM RIGHT FOR BUTTON",
+    "FOR CLOUD GAMING, GAMES LIKE GTA V etc ADDED"
   ]
 }
