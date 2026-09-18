@@ -1,9 +1,8 @@
 {
-  "version": "2.5.0",
-  "tip": "proxy!!!!!",
+  "version": "2.4.1",
+  "tip": "i added a proxy but had to remove it",
   "list": [
-    "added proxy!!",
-    "(experimental proxy!! a lot of stuff wont work, it will load slow,)",
-    "(sumbit google forum that you want to work on the proxy! have fun"
+    "removed  proxy (it was here for like 3 hours)",
+    "removed because the server isnt strong enough to run it :d"
   ]
 }
