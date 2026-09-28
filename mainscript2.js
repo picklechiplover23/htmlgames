@@ -12,6 +12,12 @@ let bypassOn;
 const lastUpdateLog = localStorage.getItem("update-log");
 const root = document.getElementById("root");
 const updateLog = document.getElementById("update-log");
+if (document.currentScript?.src) {
+  const matchingCSS = document.createElement("link");
+  matchingCSS.rel = "stylesheet";
+  matchingCSS.href = new URL("main.css", document.currentScript.src).href;
+  document.head.appendChild(matchingCSS);
+}
 let username = null;
 let fatalError = false;
 let currentDir = "root";
@@ -837,7 +843,6 @@ function renderNewUIGames() {
 }
 
 async function openGameFromNewUI(id) {
-  // Open during the click so popup blockers do not reject the window after fetch.
   const popup = bypassOn ? null : window.open("about:blank", "_blank");
   if (!bypassOn && !popup) {
     alert("allow popups to open games");
@@ -893,7 +898,7 @@ async function initNewUI() {
   document.getElementById("btn-strip")?.remove();
   root.innerHTML = `<div class="new-ui">
     <header class="new-ui-header">
-      <h1>sfools</h1>
+      <h1>sfools v7</h1>
       <label class="new-ui-search"><span aria-hidden="true">⌕</span><input type="search" id="new-ui-search" placeholder="search games" autocomplete="off"></label>
       <nav class="new-ui-nav" aria-label="site navigation">
         <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
@@ -1763,6 +1768,13 @@ window.addEventListener("error", (event) => {
 });
 
 function init(versionCheck) {
+  const preference = localStorage.getItem(UI_PREFERENCE_KEY);
+  if (!preference) return showUIChoice();
+  if (preference === "new") return initNewUI();
+  return initTerminal(versionCheck);
+}
+
+function initTerminal(versionCheck) {
   document.body.classList.remove("new-ui-mode");
   root.innerHTML = ``;
   log("DOM INITIALIZED.");
@@ -1863,7 +1875,6 @@ async function pickShittifyBase() {
   return shittifyBase;
 }
 
-// LOL theres such a better way i can do this but the codebase is so large now that idegaf
 
 async function fetchBuhPage() {
   const bases = [...new Set([shittifyBase, ...SHITTIFY_BASES].filter(Boolean))];
