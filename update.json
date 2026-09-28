@@ -1,19 +1,8 @@
 {
-<<<<<<< HEAD
-  "version": "2.1.2",
-  "tip": "bleh v2",
+  "version": "2.5.0",
+  "tip": "NEW UI + MORE GAMES",
   "list": [
-    "fixed ice dodo",
-    "fixed minecraft and minecraft alpha",
-    "fixed numby number factory",
-    "added 9+ games"
-=======
-  "version": "2.1.1",
-  "tip": "bleh",
-  "list": [
-    "fixed foolflix searching ( u can now search shows )",
-    "fixed balatro",
-    "FIXED DELTARUNE CHAPTER 5 :D (you have to open it once choose a chapter close it then reopen)"
->>>>>>> dc6f33100af7d1737c62ac37661b7ac6c60638e4
+    "ADDED KERBAL SPACE PROGRAM AND TF2 AND MORE",
+    "NEW UI!"
   ]
 }
