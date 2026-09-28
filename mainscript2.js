@@ -539,7 +539,7 @@ function playIntroThenInit(versionCheck) {
     localStorage.setItem("has-seen-intro", "true");
     overlay.style.opacity = "0";
     setTimeout(() => overlay.remove(), 1000);
-    init(versionCheck);
+    showUIChoice();
   }
 
   video.addEventListener("ended", finishIntro);
@@ -664,7 +664,7 @@ function playTutorialThenInit() {
     overlay.style.transition = "opacity 1s ease";
     overlay.style.opacity = "0";
     setTimeout(() => overlay.remove(), 1000);
-    init(true);
+    showUIChoice();
   }
 
   skipBtn.addEventListener("click", finishTutorial);
@@ -703,6 +703,248 @@ function playTutorialThenInit() {
       loadingText.textContent = "failed to load tutorial, skipping...";
       setTimeout(finishTutorial, 1500);
     });
+}
+
+const UI_PREFERENCE_KEY = "sfools-ui";
+let newUIGames = [];
+let newUIState = { sort: "abc", query: "" };
+let newUIViewRequestFinished = false;
+
+function startSite() {
+  if (!localStorage.getItem("has-seen-intro")) {
+    showFirstVisitPrompt();
+  } else if (!localStorage.getItem(UI_PREFERENCE_KEY)) {
+    showUIChoice();
+  } else {
+    openSelectedUI();
+  }
+}
+
+function showUIChoice() {
+  document.getElementById("ui-choice")?.remove();
+  const dialog = document.createElement("dialog");
+  dialog.id = "ui-choice";
+  dialog.className = "first-visit-overlay";
+  dialog.innerHTML = `<div class="first-visit-box">
+    <h2>choose your UI</h2>
+    <p>you can switch later from either UI.</p>
+    <div class="first-visit-btn-row">
+      <button type="button" class="button-log" data-ui="new">New UI</button>
+      <button type="button" class="button-log" data-ui="terminal">Terminal UI</button>
+    </div>
+  </div>`;
+  dialog.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-ui]");
+    if (!button) return;
+    localStorage.setItem(UI_PREFERENCE_KEY, button.dataset.ui);
+    dialog.close();
+    dialog.remove();
+    openSelectedUI();
+  });
+  document.body.appendChild(dialog);
+  dialog.showModal();
+}
+
+function openSelectedUI() {
+  if (localStorage.getItem(UI_PREFERENCE_KEY) === "new") initNewUI();
+  else init(true);
+}
+
+function switchUI(ui) {
+  localStorage.setItem(UI_PREFERENCE_KEY, ui);
+  document.getElementById("btn-strip")?.remove();
+  if (ui === "new") {
+    if (currentTerminalHandler) {
+      document.removeEventListener("keydown", currentTerminalHandler);
+      currentTerminalHandler = null;
+    }
+    initNewUI();
+  } else {
+    init(false);
+  }
+}
+
+function formatViews(count) {
+  return Number(count).toLocaleString();
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "/" || !document.body.classList.contains("new-ui-mode")) return;
+  const search = document.getElementById("new-ui-search");
+  if (!search || document.activeElement === search) return;
+  event.preventDefault();
+  search.focus();
+});
+
+function renderNewUIGames() {
+  const grid = document.getElementById("new-ui-grid");
+  if (!grid) return;
+  const query = newUIState.query;
+  const games = newUIGames.filter((game) =>
+    game.name.toLowerCase().includes(query) || String(game.id).includes(query),
+  );
+  if (newUIState.sort === "abc") {
+    games.sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
+  } else if (newUIState.sort === "id") {
+    games.sort((a, b) => Number(a.id) - Number(b.id));
+  } else {
+    games.sort((a, b) => getViewsForGame(b.id) - getViewsForGame(a.id));
+  }
+  grid.replaceChildren();
+  if (!games.length) {
+    const empty = document.createElement("p");
+    empty.className = "new-ui-empty";
+    empty.textContent = newUIGames.length ? "no games match your search" : "no games available";
+    grid.appendChild(empty);
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  games.forEach((game) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "new-ui-card";
+    card.title = `play ${game.name}`;
+    const thumb = document.createElement("span");
+    thumb.className = "new-ui-thumb";
+    const img = document.createElement("img");
+    img.src = `${rootLink}img/${encodeURIComponent(game.id)}.png`;
+    img.alt = "";
+    img.loading = "lazy";
+    img.addEventListener("error", () => {
+      img.remove();
+      thumb.textContent = game.name.slice(0, 2).toUpperCase();
+    }, { once: true });
+    thumb.appendChild(img);
+    const info = document.createElement("span");
+    info.className = "new-ui-card-info";
+    const name = document.createElement("span");
+    name.className = "new-ui-name";
+    name.textContent = game.name;
+    const tags = document.createElement("span");
+    tags.className = "new-ui-tags";
+    const id = document.createElement("span");
+    id.textContent = `id: ${game.id}`;
+    const views = document.createElement("span");
+    views.textContent = viewJSON ? `views: ${formatViews(getViewsForGame(game.id))}` :
+      (newUIViewRequestFinished ? "views: unavailable" : "views: loading");
+    tags.append(id, views);
+    info.append(name, tags);
+    card.append(thumb, info);
+    card.addEventListener("click", () => openGameFromNewUI(game.id));
+    fragment.appendChild(card);
+  });
+  grid.appendChild(fragment);
+}
+
+async function openGameFromNewUI(id) {
+  // Open during the click so popup blockers do not reject the window after fetch.
+  const popup = bypassOn ? null : window.open("about:blank", "_blank");
+  if (!bypassOn && !popup) {
+    alert("allow popups to open games");
+    return;
+  }
+  try {
+    html = await loadGame(id);
+    actuallyLaunch(popup);
+  } catch (error) {
+    if (popup && !popup.closed) popup.close();
+    alert(error.message);
+  }
+}
+
+async function openExtraPage(page) {
+  const popup = bypassOn ? null : window.open("about:blank", "_blank");
+  if (!bypassOn && !popup) {
+    alert("allow popups to open this page");
+    return;
+  }
+  try {
+    const base = await pickShittifyBase();
+    const response = await fetch(`${base}/${page}?v=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`failed to open ${page} (${response.status})`);
+    const pageHtml = await response.text();
+    if (bypassOn) {
+      const overlay = document.createElement("div");
+      overlay.className = "bypass-overlay";
+      const frame = document.createElement("iframe");
+      frame.className = "bypass-iframe";
+      frame.srcdoc = pageHtml;
+      const close = document.createElement("button");
+      close.className = "bypass-close-btn";
+      close.textContent = "×";
+      close.setAttribute("aria-label", "close page");
+      close.addEventListener("click", () => { overlay.remove(); close.remove(); });
+      overlay.appendChild(frame);
+      document.body.append(overlay, close);
+    } else if (!popup.closed) {
+      popup.document.open();
+      popup.document.write(pageHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${base}/">`));
+      popup.document.close();
+    }
+  } catch (error) {
+    if (popup && !popup.closed) popup.close();
+    alert(error.message);
+  }
+}
+
+async function initNewUI() {
+  newUIViewRequestFinished = Boolean(viewJSON);
+  document.body.classList.add("new-ui-mode");
+  document.getElementById("btn-strip")?.remove();
+  root.innerHTML = `<div class="new-ui">
+    <header class="new-ui-header">
+      <h1>sfools</h1>
+      <label class="new-ui-search"><span aria-hidden="true">⌕</span><input type="search" id="new-ui-search" placeholder="search games" autocomplete="off"></label>
+      <nav class="new-ui-nav" aria-label="site navigation">
+        <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
+        <button type="button" data-action="movies">movies &amp; shows</button>
+        <button type="button" data-action="ai">ai</button>
+        <button type="button" data-action="chat">chat</button>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSetcNAFkZMXlVZ9MCik9xGfTDwzhjtwP88WjLdH55BY4bqb9g/viewform?pli=1" target="_blank" rel="noopener">requests &amp; issues</a>
+        <button type="button" data-action="terminal">terminal UI</button>
+      </nav>
+    </header>
+    <main class="new-ui-main">
+      <div class="new-ui-bar"><h2>all games</h2><div class="new-ui-pills" aria-label="sort games">
+        <button type="button" data-sort="abc" aria-pressed="true">abc</button>
+        <button type="button" data-sort="id" aria-pressed="false">id</button>
+        <button type="button" data-sort="views" aria-pressed="false">views</button>
+      </div></div>
+      <p id="new-ui-status" class="new-ui-status" role="status">loading games...</p>
+      <div id="new-ui-grid" class="new-ui-grid"></div>
+    </main>
+  </div>`;
+  const ui = root.querySelector(".new-ui");
+  ui.querySelector("#new-ui-search").addEventListener("input", (event) => {
+    newUIState.query = event.target.value.trim().toLowerCase();
+    renderNewUIGames();
+  });
+  ui.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", async () => {
+    newUIState.sort = button.dataset.sort;
+    ui.querySelectorAll("[data-sort]").forEach((pill) => pill.setAttribute("aria-pressed", String(pill === button)));
+    if (newUIState.sort === "views" && !viewJSON) await getViews();
+    renderNewUIGames();
+  }));
+  ui.querySelector(".new-ui-nav").addEventListener("click", (event) => {
+    const action = event.target.closest("[data-action]")?.dataset.action;
+    if (action === "movies") openExtraPage("FoolFlix.html");
+    else if (action === "shittify") openExtraPage("shittify21.html");
+    else if (action === "ai") openAiOverlay();
+    else if (action === "chat") { currentDir = "chat"; switchUI("terminal"); commands.ls([]); }
+    else if (action === "terminal") switchUI("terminal");
+  });
+  try {
+    const pages = await loadJSON();
+    if (!ui.isConnected) return;
+    newUIGames = Object.values(pages).flat().filter((game) => game && game.id != null && game.name);
+    ui.querySelector("#new-ui-status").textContent = `${newUIGames.length} games`;
+    renderNewUIGames();
+    await getViews();
+    newUIViewRequestFinished = true;
+    if (ui.isConnected) renderNewUIGames();
+  } catch (error) {
+    if (ui.isConnected) ui.querySelector("#new-ui-status").textContent = error.message;
+  }
 }
 
 function replayTutorial() {
@@ -938,7 +1180,7 @@ function renderRoomList(publicRooms) {
   loadTyper();
 }
 
-function actuallyLaunch() {
+function actuallyLaunch(openedWindow) {
   if (bypassOn) {
     const overlay = document.createElement("div");
     overlay.id = "bypass-overlay";
@@ -965,14 +1207,14 @@ function actuallyLaunch() {
     return;
   }
 
-  const gameWindow = window.open("", "_blank");
+  const gameWindow = openedWindow || window.open("about:blank", "_blank");
   if (!gameWindow) return;
 
   const originalHTML = html;
 
   function loadIntoWindow() {
     gameWindow.document.open();
-    gameWindow.document.write(originalHTML);
+    gameWindow.document.write(originalHTML.replace(/<head([^>]*)>/i, `<head$1><base href="${rootLink}games2/">`));
     gameWindow.document.close();
 
     const erudaScript = gameWindow.document.createElement("script");
@@ -1521,6 +1763,7 @@ window.addEventListener("error", (event) => {
 });
 
 function init(versionCheck) {
+  document.body.classList.remove("new-ui-mode");
   root.innerHTML = ``;
   log("DOM INITIALIZED.");
   setTimeout(() => {
@@ -1572,7 +1815,9 @@ async function getViews() {
     const data = await res.json();
     viewJSON = data.files;
   } catch (err) {
-    log("error: failed to get game views (DATA API not sfools fault)", "error");
+    console.error("failed to get game views", err);
+    if (!document.body.classList.contains("new-ui-mode"))
+      log("error: failed to get game views (DATA API not sfools fault)", "error");
   } finally {
     viewsLoading = false;
   }
@@ -1620,6 +1865,23 @@ async function pickShittifyBase() {
 
 // LOL theres such a better way i can do this but the codebase is so large now that idegaf
 
+async function fetchBuhPage() {
+  const bases = [...new Set([shittifyBase, ...SHITTIFY_BASES].filter(Boolean))];
+  for (const base of bases) {
+    try {
+      const response = await fetch(`${base}/buh.html?v=${Date.now()}`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) continue;
+      const pageHtml = await response.text();
+      if (!/<(?:!doctype\s+html|html)\b/i.test(pageHtml)) continue;
+      return pageHtml;
+    } catch {}
+  }
+  throw new Error("could not load buh.html from any configured mirror");
+}
+
 function addUIElements() {
   const existing = document.getElementById("btn-strip");
   if (existing) existing.remove();
@@ -1636,56 +1898,56 @@ function addUIElements() {
   button4.appendChild(spotifyImg);
   strip.appendChild(button4);
 
-  button4.addEventListener("click", async function () {
-    this.blur();
-    const shittifyBaseUrl = await pickShittifyBase();
-    const res = await fetch(
-      `${shittifyBaseUrl}/shittify21.html?v=${Date.now()}`,
-      { cache: "no-store" },
-    );
-    const pageHtml = await res.text();
+  button4.addEventListener("click", () => openExtraPage("shittify21.html"));
 
-    if (bypassOn) {
-      const overlay = document.createElement("div");
-      overlay.id = "bypass-overlay";
-      overlay.classList.add("bypass-overlay");
-
-      const closeBtn = document.createElement("button");
-      closeBtn.classList.add("bypass-close-btn");
-      closeBtn.textContent = "\u00d7";
-
-      const iframe = document.createElement("iframe");
-      iframe.classList.add("bypass-iframe");
-      iframe.srcdoc = pageHtml;
-
-      overlay.appendChild(iframe);
-      document.body.appendChild(overlay);
-      document.body.appendChild(closeBtn);
-
-      closeBtn.addEventListener("click", () => {
-        overlay.remove();
-        closeBtn.remove();
-      });
-    } else {
-      const w = window.open("", "_blank");
-      if (!w) return;
-      w.document.open();
-      w.document.write(pageHtml);
-      w.document.close();
+  const proxyBtn = document.createElement("button");
+  proxyBtn.classList.add("button-general", "button-log", "dl-latest");
+  proxyBtn.textContent = "proxy";
+  proxyBtn.addEventListener("click", async () => {
+    proxyBtn.blur();
+    const useOverlay = Boolean(bypassOn);
+    const popup = useOverlay ? null : window.open("", "_blank");
+    if (!useOverlay && !popup) {
+      log("proxy: allow popups to open buh", "warn");
+      return;
+    }
+    proxyBtn.disabled = true;
+    try {
+      const pageHtml = await fetchBuhPage();
+      if (useOverlay) {
+        const overlay = document.createElement("div");
+        overlay.id = "bypass-overlay";
+        overlay.classList.add("bypass-overlay");
+        const closeBtn = document.createElement("button");
+        closeBtn.classList.add("bypass-close-btn");
+        closeBtn.textContent = "\u00d7";
+        closeBtn.setAttribute("aria-label", "close proxy");
+        const iframe = document.createElement("iframe");
+        iframe.classList.add("bypass-iframe");
+        iframe.title = "buh proxy";
+        iframe.allow =
+          "fullscreen; autoplay; camera; microphone; clipboard-write";
+        iframe.srcdoc = pageHtml;
+        overlay.appendChild(iframe);
+        document.body.appendChild(overlay);
+        document.body.appendChild(closeBtn);
+        closeBtn.addEventListener("click", () => {
+          overlay.remove();
+          closeBtn.remove();
+        });
+      } else if (!popup.closed) {
+        popup.document.open();
+        popup.document.write(pageHtml);
+        popup.document.close();
+      }
+    } catch (error) {
+      if (popup && !popup.closed) popup.close();
+      log("proxy: " + error.message, "error");
+    } finally {
+      proxyBtn.disabled = false;
     }
   });
-
-  const chatSHit = document.createElement("button");
-  chatSHit.classList.add("button-general", "button-log", "dl-latest");
-  chatSHit.textContent = "chat";
-  chatSHit.addEventListener("click", async (e) => {
-    currentDir = "chat";
-    alert(
-      "to use chat do name {username} to set ur user ls chat to see all chatrooms and create {roomname} public or private to make a room and use join {code} for private chatrooms. enjoy!",
-    );
-    init();
-  });
-  strip.appendChild(chatSHit);
+  strip.appendChild(proxyBtn);
 
   const button3 = document.createElement("button");
   button3.classList.add("button-general", "bypasser", "button-log");
@@ -1832,6 +2094,54 @@ function addUIElements() {
     }
   });
   strip.appendChild(moviesBtn);
+
+  const cloudBtn = document.createElement("button");
+  cloudBtn.classList.add("button-general", "button-log");
+  cloudBtn.textContent = "cloud gaming";
+  cloudBtn.addEventListener("click", async () => {
+    cloudBtn.blur();
+    const shittifyBaseUrl = await pickShittifyBase();
+    const res = await fetch(`${shittifyBaseUrl}/cloud.html?v=${Date.now()}`, {
+      cache: "no-store",
+    });
+    const pageHtml = await res.text();
+
+    if (bypassOn) {
+      const overlay = document.createElement("div");
+      overlay.id = "bypass-overlay";
+      overlay.classList.add("bypass-overlay");
+
+      const closeBtn = document.createElement("button");
+      closeBtn.classList.add("bypass-close-btn");
+      closeBtn.textContent = "\u00d7";
+
+      const iframe = document.createElement("iframe");
+      iframe.classList.add("bypass-iframe");
+      iframe.srcdoc = pageHtml;
+
+      overlay.appendChild(iframe);
+      document.body.appendChild(overlay);
+      document.body.appendChild(closeBtn);
+
+      closeBtn.addEventListener("click", () => {
+        overlay.remove();
+        closeBtn.remove();
+      });
+    } else {
+      const w = window.open("", "_blank");
+      if (!w) return;
+      w.document.open();
+      w.document.write(pageHtml);
+      w.document.close();
+    }
+  });
+  strip.appendChild(cloudBtn);
+
+  const newUIBtn = document.createElement("button");
+  newUIBtn.classList.add("button-general", "button-log");
+  newUIBtn.textContent = "new UI";
+  newUIBtn.addEventListener("click", () => switchUI("new"));
+  strip.appendChild(newUIBtn);
 }
 
 function log(text, type) {

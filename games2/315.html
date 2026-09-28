@@ -1,415 +1,133 @@
-```html
 <!DOCTYPE html>
 <html lang="en-us">
-<head>
+  <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-
-    <base href="https://cdn.jsdelivr.net/gh/thirstygithub/mibomboclat@main/">
-
-    <title>Kerbal Space Program</title>
-
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-            font-family: monospace;
-        }
-
-        #unity-container {
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        #unity-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        #custom-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.3s ease-out;
-        }
-
-        .progress-container {
-            width: 200px;
-            height: 4px;
-            background: #222;
-            margin-bottom: 10px;
-        }
-
-        #progress-fill {
-            width: 0%;
-            height: 100%;
-            background: #fff;
-            transition: width 0.1s linear;
-        }
-
-        #loader-status {
-            color: #fff;
-            font-size: 12px;
-            letter-spacing: 1px;
-        }
-    </style>
-</head>
-
-<body>
-
-<div id="unity-container">
-    <canvas id="unity-canvas" tabindex="-1"></canvas>
-</div>
-
-<div id="custom-loader">
-    <div class="progress-container">
-        <div id="progress-fill"></div>
+    <title>Unity WebGL Player | RimWorld by Ludeon Studios</title>
+ <base
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips/rimworld/"
+    />
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css?v=unity-intro-v9">
+    <link rel="manifest" href="manifest.webmanifest">
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" width=1300 height=900 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
     </div>
-    <div id="loader-status">0%</div>
-</div>
-
-<script>
-"use strict";
-
-const BASE = "https://cdn.jsdelivr.net/gh/thirstygithub/mibomboclat@main/";
-const RAW_BASE = "https://raw.githubusercontent.com/thirstygithub/mibomboclat/main/";
-
-const loaderStatus = document.getElementById("loader-status");
-const progressFill = document.getElementById("progress-fill");
-const customLoader = document.getElementById("custom-loader");
-
-function updateProgress(percent) {
-    if (percent !== null) {
-        const p = Math.min(100, Math.max(0, Math.round(percent)));
-        progressFill.style.width = p + "%";
-        loaderStatus.innerText = p + "%";
-    }
-}
-
-async function fetchFile(url) {
-    const r = await fetch(url);
-
-    if (!r.ok) {
-        throw new Error("Failed: " + url);
-    }
-
-    return r.arrayBuffer();
-}
-
-async function fetchWithFallback(path) {
-    try {
-        return await fetchFile(BASE + path);
-    } catch (e) {
-        return await fetchFile(RAW_BASE + path);
-    }
-}
-
-async function fetchChunks(
-    baseName,
-    startIndex,
-    count,
-    padDigits,
-    progressStart,
-    progressEnd
-) {
-    const buffers = [];
-    let total = 0;
-
-    for (let i = 0; i < count; i++) {
-        const idx = startIndex + i;
-
-        const padded =
-            padDigits > 0
-                ? String(idx).padStart(padDigits, "0")
-                : String(idx);
-
-        const path = baseName + ".part" + padded;
-
-        updateProgress(
-            progressStart +
-            ((i / count) * (progressEnd - progressStart))
-        );
-
-        const buf = await fetchWithFallback(path);
-
-        buffers.push(buf);
-        total += buf.byteLength;
-    }
-
-    const out = new Uint8Array(total);
-
-    let offset = 0;
-
-    for (const b of buffers) {
-        out.set(new Uint8Array(b), offset);
-        offset += b.byteLength;
-    }
-
-    return out;
-}
-
-const preloadedAssets = {};
-
-async function preloadStreamingPack(
-    baseName,
-    partCount,
-    progressStart,
-    progressEnd
-) {
-    const buffers = [];
-    let total = 0;
-
-    for (let i = 1; i <= partCount; i++) {
-        const path = baseName + ".part" + i;
-
-        updateProgress(
-            progressStart +
-            (((i - 1) / partCount) *
-            (progressEnd - progressStart))
-        );
-
-        const buf = await fetchWithFallback(path);
-
-        buffers.push(buf);
-        total += buf.byteLength;
-    }
-
-    const out = new Uint8Array(total);
-
-    let offset = 0;
-
-    for (const b of buffers) {
-        out.set(new Uint8Array(b), offset);
-        offset += b.byteLength;
-    }
-
-    preloadedAssets[baseName] =
-        URL.createObjectURL(
-            new Blob([out], {
-                type: "application/octet-stream"
-            })
-        );
-}
-
-/*
-    Only intercept requests for the files that were
-    actually split into .part files.
-
-    Everything else goes through normal fetch().
-*/
-
-const originalFetch = window.fetch.bind(window);
-
-window.fetch = function(input, init) {
-    const url =
-        typeof input === "string"
-            ? input
-            : input.url;
-
-    for (const [key, blobUrl] of Object.entries(preloadedAssets)) {
-        const fileName = key.split("/").pop();
-
-        if (
-            url.includes(fileName) &&
-            !url.includes(".part")
-        ) {
-            return originalFetch(blobUrl, init);
-        }
-    }
-
-    return originalFetch(input, init);
-};
-
-async function boot() {
-    try {
-
-        /*
-            Split Build.data
-        */
-
-        const dataBytes = await fetchChunks(
-            "Build/Build.data",
-            1,
-            21,
-            2,
-            0,
-            30
-        );
-
-        const dataUrl =
-            URL.createObjectURL(
-                new Blob([dataBytes])
-            );
-
-        updateProgress(33);
-
-        /*
-            Framework
-        */
-
-        const fwBuf =
-            await fetchWithFallback(
-                "Build/Build.framework.js"
-            );
-
-        const fwText =
-            new TextDecoder().decode(fwBuf);
-
-        const fwScript =
-            document.createElement("script");
-
-        fwScript.textContent = fwText;
-
-        document.head.appendChild(fwScript);
-
-        updateProgress(35);
-
-        /*
-            Split WASM
-        */
-
-        const wasmBytes =
-            await fetchChunks(
-                "Build/Build.wasm",
-                1,
-                3,
-                0,
-                35,
-                50
-            );
-
-        const wasmUrl =
-            URL.createObjectURL(
-                new Blob(
-                    [wasmBytes],
-                    {
-                        type: "application/wasm"
-                    }
-                )
-            );
-
-        /*
-            StreamingAssets
-        */
-
-        await preloadStreamingPack(
-            "StreamingAssets/ksp/core.000.pack",
-            3,
-            50,
-            65
-        );
-
-        await preloadStreamingPack(
-            "StreamingAssets/ksp/core.001.pack",
-            2,
-            65,
-            75
-        );
-
-        updateProgress(78);
-
-        const canvas =
-            document.querySelector("#unity-canvas");
-
-        const config = {
-            arguments: [],
-
-            dataUrl: dataUrl,
-
-            frameworkUrl:
-                BASE + "Build/Build.framework.js",
-
-            codeUrl: wasmUrl,
-
-            streamingAssetsUrl:
-                BASE + "StreamingAssets/",
-
-            companyName: "Squad",
-
-            productName:
-                "Kerbal Space Program",
-
-            productVersion: "1.0"
+    <script src="chunk-loader.js?v=parts-v1"></script>
+    <script>
+      var consoleRepeats = Object.create(null);
+      ["error", "warn"].forEach(function (level) {
+        var original = console[level].bind(console);
+        console[level] = function () {
+          var message = arguments.length ? String(arguments[0]) : "";
+          if (message.indexOf("WebGL: INVALID_ENUM: getInternalformatParameter") !== -1) return;
+          var key = level + ":" + message;
+          var count = (consoleRepeats[key] || 0) + 1;
+          consoleRepeats[key] = count;
+          if (count > 3) return;
+          var args = Array.prototype.slice.call(arguments);
+          setTimeout(function () { original.apply(console, args); }, 0);
         };
+      });
 
-        updateProgress(80);
+      window.addEventListener("load", function () {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("ServiceWorker.js");
+        }
+      });
 
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
 
-        const loaderBuf =
-            await fetchWithFallback(
-                "Build/Build.loader.js"
-            );
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.textContent = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') {
+          div.style = 'background: red; padding: 10px;';
+        }
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
 
-        const loaderText =
-            new TextDecoder().decode(loaderBuf);
+      var buildUrl = "Build";
+      var buildRevision = "webgl-parts-980c1d308e2c";
+      var loaderUrl = buildUrl + "/RimWebWorld.loader.js?v=" + buildRevision;
+      var config = {
+        dataUrl: buildUrl + "/RimWebWorld.data?v=" + buildRevision,
+        frameworkUrl: buildUrl + "/RimWebWorld.framework.js?v=" + buildRevision,
+        codeUrl: buildUrl + "/RimWebWorld.wasm?v=" + buildRevision,
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Ludeon Studios",
+        productName: "RimWorld by Ludeon Studios",
+        productVersion: "1.6",
+        showBanner: unityShowBanner,
+        // Avoid multiplying GPU work by four on a 2x-DPI screen.
+        devicePixelRatio: 1,
+      };
 
-        const loaderScript =
-            document.createElement("script");
+      // By default Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
 
-        loaderScript.textContent =
-            loaderText;
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+      }
 
-        document.head.appendChild(loaderScript);
+      loadingBar.style.display = "block";
 
-        updateProgress(85);
-
-
-        createUnityInstance(
-            canvas,
-            config,
-            (progress) => {
-                updateProgress(
-                    85 + (progress * 15)
-                );
-            }
-        )
-        .then((unityInstance) => {
-
-            updateProgress(100);
-
-            customLoader.style.opacity = "0";
-
-            setTimeout(() => {
-                customLoader.style.display = "none";
-            }, 300);
-
-        })
-        .catch((message) => {
-
-            loaderStatus.innerText = "Error";
-
-            console.error(message);
-
-            alert(message);
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        installUnityChunkLoader().then(() => createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        })).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          canvas.focus({ preventScroll: true });
+        }).catch((message) => {
+          loadingBar.style.display = "none";
+          unityShowBanner(String(message), "error");
         });
-
-    } catch (err) {
-
-        loaderStatus.innerText = "Error";
-
-        console.error(err);
-    }
-}
-
-boot();
-</script>
-
-</body>
+      };
+      script.onerror = function () {
+        loadingBar.style.display = "none";
+        unityShowBanner("Could not load the game. Please refresh to try again.", "error");
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
 </html>
-```
