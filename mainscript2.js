@@ -893,7 +893,7 @@ async function initNewUI() {
   document.getElementById("btn-strip")?.remove();
   root.innerHTML = `<div class="new-ui">
     <header class="new-ui-header">
-      <h1>sfools v7</h1>
+      <h1>sfools</h1>
       <label class="new-ui-search"><span aria-hidden="true">⌕</span><input type="search" id="new-ui-search" placeholder="search games" autocomplete="off"></label>
       <nav class="new-ui-nav" aria-label="site navigation">
         <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
