@@ -774,7 +774,8 @@ function formatViews(count) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.key !== "/" || !document.body.classList.contains("new-ui-mode")) return;
+  if (event.key !== "/" || !document.body.classList.contains("new-ui-mode"))
+    return;
   const search = document.getElementById("new-ui-search");
   if (!search || document.activeElement === search) return;
   event.preventDefault();
@@ -785,8 +786,10 @@ function renderNewUIGames() {
   const grid = document.getElementById("new-ui-grid");
   if (!grid) return;
   const query = newUIState.query;
-  const games = newUIGames.filter((game) =>
-    game.name.toLowerCase().includes(query) || String(game.id).includes(query),
+  const games = newUIGames.filter(
+    (game) =>
+      game.name.toLowerCase().includes(query) ||
+      String(game.id).includes(query),
   );
   if (newUIState.sort === "abc") {
     games.sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
@@ -799,7 +802,9 @@ function renderNewUIGames() {
   if (!games.length) {
     const empty = document.createElement("p");
     empty.className = "new-ui-empty";
-    empty.textContent = newUIGames.length ? "no games match your search" : "no games available";
+    empty.textContent = newUIGames.length
+      ? "no games match your search"
+      : "no games available";
     grid.appendChild(empty);
     return;
   }
@@ -815,10 +820,14 @@ function renderNewUIGames() {
     img.src = `${rootLink}img/${encodeURIComponent(game.id)}.png`;
     img.alt = "";
     img.loading = "lazy";
-    img.addEventListener("error", () => {
-      img.remove();
-      thumb.textContent = game.name.slice(0, 2).toUpperCase();
-    }, { once: true });
+    img.addEventListener(
+      "error",
+      () => {
+        img.remove();
+        thumb.textContent = game.name.slice(0, 2).toUpperCase();
+      },
+      { once: true },
+    );
     thumb.appendChild(img);
     const info = document.createElement("span");
     info.className = "new-ui-card-info";
@@ -830,8 +839,11 @@ function renderNewUIGames() {
     const id = document.createElement("span");
     id.textContent = `id: ${game.id}`;
     const views = document.createElement("span");
-    views.textContent = viewJSON ? `views: ${formatViews(getViewsForGame(game.id))}` :
-      (newUIViewRequestFinished ? "views: unavailable" : "views: loading");
+    views.textContent = viewJSON
+      ? `views: ${formatViews(getViewsForGame(game.id))}`
+      : newUIViewRequestFinished
+        ? "views: unavailable"
+        : "views: loading";
     tags.append(id, views);
     info.append(name, tags);
     card.append(thumb, info);
@@ -864,8 +876,11 @@ async function openExtraPage(page) {
   }
   try {
     const base = await pickShittifyBase();
-    const response = await fetch(`${base}/${page}?v=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`failed to open ${page} (${response.status})`);
+    const response = await fetch(`${base}/${page}?v=${Date.now()}`, {
+      cache: "no-store",
+    });
+    if (!response.ok)
+      throw new Error(`failed to open ${page} (${response.status})`);
     const pageHtml = await response.text();
     if (bypassOn) {
       const overlay = document.createElement("div");
@@ -877,12 +892,17 @@ async function openExtraPage(page) {
       close.className = "bypass-close-btn";
       close.textContent = "×";
       close.setAttribute("aria-label", "close page");
-      close.addEventListener("click", () => { overlay.remove(); close.remove(); });
+      close.addEventListener("click", () => {
+        overlay.remove();
+        close.remove();
+      });
       overlay.appendChild(frame);
       document.body.append(overlay, close);
     } else if (!popup.closed) {
       popup.document.open();
-      popup.document.write(pageHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${base}/">`));
+      popup.document.write(
+        pageHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${base}/">`),
+      );
       popup.document.close();
     }
   } catch (error) {
@@ -924,40 +944,54 @@ async function initNewUI() {
     newUIState.query = event.target.value.trim().toLowerCase();
     renderNewUIGames();
   });
-  ui.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", async () => {
-    newUIState.sort = button.dataset.sort;
-    ui.querySelectorAll("[data-sort]").forEach((pill) => pill.setAttribute("aria-pressed", String(pill === button)));
-    if (newUIState.sort === "views" && !viewJSON) await getViews();
-    renderNewUIGames();
-  }));
+  ui.querySelectorAll("[data-sort]").forEach((button) =>
+    button.addEventListener("click", async () => {
+      newUIState.sort = button.dataset.sort;
+      ui.querySelectorAll("[data-sort]").forEach((pill) =>
+        pill.setAttribute("aria-pressed", String(pill === button)),
+      );
+      if (newUIState.sort === "views" && !viewJSON) await getViews();
+      renderNewUIGames();
+    }),
+  );
   ui.querySelector(".new-ui-nav").addEventListener("click", (event) => {
     const action = event.target.closest("[data-action]")?.dataset.action;
     if (action === "movies") openExtraPage("FoolFlix.html");
     else if (action === "shittify") openExtraPage("shittify21.html");
     else if (action === "ai") openAiOverlay();
-    else if (action === "chat") { currentDir = "chat"; switchUI("terminal"); commands.ls([]); }
-    else if (action === "updates") checkNewUIUpdates(true);
+    else if (action === "chat") {
+      currentDir = "chat";
+      switchUI("terminal");
+      commands.ls([]);
+    } else if (action === "updates") checkNewUIUpdates(true);
     else if (action === "terminal") switchUI("terminal");
   });
   checkNewUIUpdates();
   try {
     const pages = await loadJSON();
     if (!ui.isConnected) return;
-    newUIGames = Object.values(pages).flat().filter((game) => game && game.id != null && game.name);
-    ui.querySelector("#new-ui-status").textContent = `${newUIGames.length} games`;
+    newUIGames = Object.values(pages)
+      .flat()
+      .filter((game) => game && game.id != null && game.name);
+    ui.querySelector("#new-ui-status").textContent =
+      `${newUIGames.length} games`;
     renderNewUIGames();
     await getViews();
     newUIViewRequestFinished = true;
     if (ui.isConnected) renderNewUIGames();
   } catch (error) {
-    if (ui.isConnected) ui.querySelector("#new-ui-status").textContent = error.message;
+    if (ui.isConnected)
+      ui.querySelector("#new-ui-status").textContent = error.message;
   }
 }
 
 async function checkNewUIUpdates(force = false) {
   try {
-    const response = await fetch(`${rootLink}version.txt`, { cache: "no-cache" });
-    if (!response.ok) throw new Error(`server responded with ${response.status}`);
+    const response = await fetch(`${rootLink}version.txt`, {
+      cache: "no-cache",
+    });
+    if (!response.ok)
+      throw new Error(`server responded with ${response.status}`);
     const version = (await response.text()).trim();
     CURRENT_VERSION = version;
     if (!force && !document.body.classList.contains("new-ui-mode")) return;
@@ -1845,7 +1879,10 @@ async function getViews() {
   } catch (err) {
     console.error("failed to get game views", err);
     if (!document.body.classList.contains("new-ui-mode"))
-      log("error: failed to get game views (DATA API not sfools fault)", "error");
+      log(
+        "error: failed to get game views (DATA API not sfools fault)",
+        "error",
+      );
   } finally {
     viewsLoading = false;
   }
@@ -1890,7 +1927,6 @@ async function pickShittifyBase() {
   shittifyBase = SHITTIFY_BASES[0];
   return shittifyBase;
 }
-
 
 async function fetchBuhPage() {
   const bases = [...new Set([shittifyBase, ...SHITTIFY_BASES].filter(Boolean))];
@@ -2174,26 +2210,14 @@ function addUIElements() {
 function log(text, type) {
   const consoleText = document.createElement("pre");
   consoleText.textContent = text;
-
-  switch (type) {
-    case "info":
-      consoleText.classList.add("info");
-      break;
-    case "error":
-      consoleText.classList.add("error");
-      break;
-    case "warn":
-      consoleText.classList.add("warn");
-      break;
-    case "margin":
-      consoleText.classList.add("marginless");
-      break;
-    case "support"
-      consoleText.classList.add("support");
-      break;
-    default:
-      break;
-  }
+  const classes = {
+    info: "info",
+    error: "error",
+    warn: "warn",
+    margin: "marginless",
+    support: "support",
+  };
+  if (classes[type]) consoleText.classList.add(classes[type]);
   root.appendChild(consoleText);
   window.scrollTo(0, document.body.scrollHeight);
 }
