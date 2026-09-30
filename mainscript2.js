@@ -9,7 +9,6 @@ let viewsLoading = false;
 let offlineMode;
 let viewJSON;
 let bypassOn;
-const lastUpdateLog = localStorage.getItem("update-log");
 const root = document.getElementById("root");
 const updateLog = document.getElementById("update-log");
 if (document.currentScript?.src) {
@@ -905,6 +904,7 @@ async function initNewUI() {
         <button type="button" data-action="movies">movies &amp; shows</button>
         <button type="button" data-action="ai">ai</button>
         <button type="button" data-action="chat">chat</button>
+        <button type="button" data-action="updates">updates</button>
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSetcNAFkZMXlVZ9MCik9xGfTDwzhjtwP88WjLdH55BY4bqb9g/viewform?pli=1" target="_blank" rel="noopener">requests &amp; issues</a>
         <button type="button" data-action="terminal">terminal UI</button>
       </nav>
@@ -936,8 +936,10 @@ async function initNewUI() {
     else if (action === "shittify") openExtraPage("shittify21.html");
     else if (action === "ai") openAiOverlay();
     else if (action === "chat") { currentDir = "chat"; switchUI("terminal"); commands.ls([]); }
+    else if (action === "updates") checkNewUIUpdates(true);
     else if (action === "terminal") switchUI("terminal");
   });
+  checkNewUIUpdates();
   try {
     const pages = await loadJSON();
     if (!ui.isConnected) return;
@@ -949,6 +951,20 @@ async function initNewUI() {
     if (ui.isConnected) renderNewUIGames();
   } catch (error) {
     if (ui.isConnected) ui.querySelector("#new-ui-status").textContent = error.message;
+  }
+}
+
+async function checkNewUIUpdates(force = false) {
+  try {
+    const response = await fetch(`${rootLink}version.txt`, { cache: "no-cache" });
+    if (!response.ok) throw new Error(`server responded with ${response.status}`);
+    const version = (await response.text()).trim();
+    CURRENT_VERSION = version;
+    if (!force && !document.body.classList.contains("new-ui-mode")) return;
+    await showUpdateMenu(version, force);
+  } catch (error) {
+    console.error("failed to check for updates", error);
+    if (force) alert("failed to load updates");
   }
 }
 
@@ -1219,7 +1235,7 @@ function actuallyLaunch(openedWindow) {
 
   function loadIntoWindow() {
     gameWindow.document.open();
-    gameWindow.document.write(originalHTML.replace(/<head([^>]*)>/i, `<head$1><base href="${rootLink}games2/">`));
+    gameWindow.document.write(originalHTML);
     gameWindow.document.close();
 
     const erudaScript = gameWindow.document.createElement("script");
@@ -1236,7 +1252,7 @@ function actuallyLaunch(openedWindow) {
 }
 
 async function showUpdateMenu(latestVersion, force = false) {
-  if (force || !lastUpdateLog || lastUpdateLog !== latestVersion) {
+  if (force || localStorage.getItem("update-log") !== latestVersion) {
     const updateAlert = document.createElement("dialog");
     updateAlert.classList.add("update-log");
 
