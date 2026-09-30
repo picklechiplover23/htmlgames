@@ -2188,7 +2188,7 @@ function log(text, type) {
     case "margin":
       consoleText.classList.add("marginless");
       break;
-    case "support":
+    case "support"
       consoleText.classList.add("support");
       break;
     default:
