@@ -1,5 +1,5 @@
 {
-  "version": "2.5.1",
-  "tip": "i shouldnt have this much free time...",
-  "list": ["fixed kerbal space program clicking", "fixed tf2, gay minecraft", "AMONG US 2026 WORKING NOW", "FoolFlix will be down for a while (sorry)"]
+  "version": "2.5.2",
+  "tip": "about:blank loader had a pretty whoopsie error but thats fixed, and the reason files didnt update was github making moneys needed for big commits",
+  "list": ["fixed about:blank loader", "actually added among us this time", "fixed many game issues"]
 }
