@@ -2174,26 +2174,14 @@ function addUIElements() {
 function log(text, type) {
   const consoleText = document.createElement("pre");
   consoleText.textContent = text;
-
-  switch (type) {
-    case "info":
-      consoleText.classList.add("info");
-      break;
-    case "error":
-      consoleText.classList.add("error");
-      break;
-    case "warn":
-      consoleText.classList.add("warn");
-      break;
-    case "margin":
-      consoleText.classList.add("marginless");
-      break;
-    case "support"
-      consoleText.classList.add("support");
-      break;
-    default:
-      break;
-  }
+  const classes = {
+    info: "info",
+    error: "error",
+    warn: "warn",
+    margin: "marginless",
+    support: "support",
+  };
+  if (classes[type]) consoleText.classList.add(classes[type]);
   root.appendChild(consoleText);
   window.scrollTo(0, document.body.scrollHeight);
 }
