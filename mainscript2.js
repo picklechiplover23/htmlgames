@@ -1899,7 +1899,7 @@ function cloakk() {
 
 function getViewsForGame(id) {
   if (!viewJSON) return 0;
-  return viewJSON[`/games2/${id}.html`]?.total ?? 0;
+  return viewJSON[`/games3/${id}.html`]?.total ?? 0;
 }
 
 const SHITTIFY_BASES = [
@@ -2307,7 +2307,7 @@ async function loadJSON() {
 async function loadGame(id) {
   try {
     const response = await fetch(
-      `${rootLink}games2/${id}.html?v=${Date.now()}`,
+      `${rootLink}games3/${id}.html?v=${Date.now()}`,
       { cache: "no-store" },
     );
     if (!response.ok) throw new Error("network error");
