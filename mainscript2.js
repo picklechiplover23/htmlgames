@@ -920,7 +920,7 @@ async function initNewUI() {
       <h1>sfools v7</h1>
       <label class="new-ui-search"><span aria-hidden="true">⌕</span><input type="search" id="new-ui-search" placeholder="search games" autocomplete="off"></label>
       <nav class="new-ui-nav" aria-label="site navigation">
-        <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
+        <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
         <button type="button" data-action="movies">movies &amp; shows</button>
         <button type="button" data-action="ai">ai</button>
         <button type="button" data-action="chat">chat</button>
@@ -1235,6 +1235,67 @@ function renderRoomList(publicRooms) {
   loadTyper();
 }
 
+function showErudaPrompt(targetWin, hostDoc) {
+  const host = hostDoc.createElement("div");
+  const shadow = host.attachShadow({ mode: "open" });
+  shadow.innerHTML = `
+  <style>
+    .toast {
+      position: fixed; top: 20px; right: 0;
+      width: 240px; box-sizing: border-box; padding: 12px;
+      background: #000; color: #fff;
+      font: 13px/1.4 monospace;
+      border: 1px solid #fff; border-right: 0;
+      transform: translateX(110%);
+      transition: transform .3s ease;
+      z-index: 2147483647;
+    }
+    .toast.in { transform: translateX(0); }
+    h4 { margin: 0 0 4px; font-size: 13px; font-weight: bold; }
+    p { margin: 0 0 10px; }
+    .row { display: flex; gap: 6px; }
+    button {
+      flex: 1; padding: 4px 0; cursor: pointer;
+      border: 1px solid #fff; background: #000; color: #fff; font: inherit;
+    }
+    button:hover { background: #fff; color: #000; }
+  </style>
+  <div class="toast">
+    <h4>add eruda?</h4>
+    <p>eruda helps for debugging, but can break games.</p>
+    <div class="row">
+      <button class="yes">add</button>
+      <button class="no">no</button>
+    </div>
+  </div>`;
+
+  const toast = shadow.querySelector(".toast");
+  let timer;
+  const dismiss = () => {
+    clearTimeout(timer);
+    toast.classList.remove("in");
+    setTimeout(() => host.remove(), 450);
+  };
+
+  shadow.querySelector(".yes").addEventListener("click", () => {
+    dismiss();
+    try {
+      const s = targetWin.document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/eruda";
+      s.onload = () => targetWin.eruda && targetWin.eruda.init();
+      targetWin.document.documentElement.appendChild(s);
+    } catch (e) {
+      console.error("failed to add eruda", e);
+    }
+  });
+  shadow.querySelector(".no").addEventListener("click", dismiss);
+
+  hostDoc.documentElement.appendChild(host);
+  void toast.offsetWidth;
+  setTimeout(() => toast.classList.add("in"), 50);
+  timer = setTimeout(dismiss, 15000);
+}
+
 function actuallyLaunch(openedWindow) {
   if (bypassOn) {
     const overlay = document.createElement("div");
@@ -1259,30 +1320,20 @@ function actuallyLaunch(openedWindow) {
       closeBtn.remove();
     });
 
+    showErudaPrompt(iframe.contentWindow, document);
     return;
   }
 
   const gameWindow = openedWindow || window.open("about:blank", "_blank");
   if (!gameWindow) return;
 
-  const originalHTML = html;
+  gameWindow.document.open();
+  gameWindow.document.write(html);
+  gameWindow.document.close();
 
-  function loadIntoWindow() {
-    gameWindow.document.open();
-    gameWindow.document.write(originalHTML);
-    gameWindow.document.close();
-
-    const erudaScript = gameWindow.document.createElement("script");
-    erudaScript.src = "https://cdn.jsdelivr.net/npm/eruda";
-    erudaScript.onload = () => {
-      const initScript = gameWindow.document.createElement("script");
-      initScript.textContent = `eruda.init();`;
-      gameWindow.document.documentElement.appendChild(initScript);
-    };
-    gameWindow.document.documentElement.appendChild(erudaScript);
-  }
-
-  loadIntoWindow();
+  setTimeout(() => {
+    if (!gameWindow.closed) showErudaPrompt(gameWindow, gameWindow.document);
+  }, 800);
 }
 
 async function showUpdateMenu(latestVersion, force = false) {
@@ -1957,7 +2008,7 @@ function addUIElements() {
   button4.classList.add("button-general", "button-log", "spotify");
   const spotifyImg = document.createElement("img");
   spotifyImg.src =
-    "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
+    "https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
   button4.appendChild(spotifyImg);
   strip.appendChild(button4);
 
