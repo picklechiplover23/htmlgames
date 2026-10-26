@@ -1,10 +1,7 @@
 {
-  "version": "2.5.4",
-  "tip": "big games i tink.",
+  "version": "2.5.6",
+  "tip": "alot of games r broken for some reason so please report broken games at reports & issues form so i can try to find the root cause sorry 4 no big updates, one soon i promise.",
   "list": [
-    "NEWEST ULTRAKILL (ULTRAKILL UPDATED)",
-    "added the henery stickmen collection",
-    "Minecraft story mode + horsey game",
-    "some other games"
+    "made eruda optional (fixes some games from breaking)"
   ]
 }
