@@ -920,7 +920,7 @@ async function initNewUI() {
       <h1>sfools v7</h1>
       <label class="new-ui-search"><span aria-hidden="true">⌕</span><input type="search" id="new-ui-search" placeholder="search games" autocomplete="off"></label>
       <nav class="new-ui-nav" aria-label="site navigation">
-        <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
+        <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
         <button type="button" data-action="movies">movies &amp; shows</button>
         <button type="button" data-action="ai">ai</button>
         <button type="button" data-action="chat">chat</button>

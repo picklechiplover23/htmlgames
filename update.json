@@ -1,8 +1,8 @@
 {
-  "version": "2.5.6",
-  "tip": "alot of games r broken for some reason so please report broken games at reports & issues form so i can try to find the root cause sorry 4 no big updates, one soon i promise.",
+  "version": "2.5.7",
+  "tip": "was gonna fix ai and foolflix but server provider kicked me out my account cause 'my identity couldn't be verified' so hopefully I can get it back zoon",
   "list": [
-    "made eruda optional (fixes some games from breaking)",
-    "mcsm might be fixed?? (works at my home pc but maybe not on chromebooks)"
+    "fixed legostar wars and fireemblem",
+    "added 4 games including Geomtry Dash web port"
   ]
 }
