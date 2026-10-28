@@ -2008,7 +2008,7 @@ function addUIElements() {
   button4.classList.add("button-general", "button-log", "spotify");
   const spotifyImg = document.createElement("img");
   spotifyImg.src =
-    "https://gcore.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
+    "https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png";
   button4.appendChild(spotifyImg);
   strip.appendChild(button4);
 
