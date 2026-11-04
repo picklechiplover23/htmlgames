@@ -1,492 +1,97 @@
-<!doctype html>
-<html lang="en-us">
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Unity WebGL Player | Cuphead</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cuphead</title>
     <base
-      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips@master/Cuphead/"
+      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips@master/cuphead/"
     />
-    <link rel="shortcut icon" href="TemplateData/favicon.ico" />
-    <link rel="stylesheet" href="/TemplateData/style.css" />
     <style>
-      body {
-        margin: 0;
-        height: 100vh;
-        width: 100vw;
-      }
-      #custom-loader {
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; }
+      body { background: #111; color: #eee; font: 16px Arial, sans-serif; }
+      #unity-canvas { display: block; width: 100vw; height: 100vh; }
+      #loading {
         position: fixed;
         inset: 0;
-        background: #0a0a0a;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        font-family: "Comic Sans MS", "Comic Sans", cursive;
-        color: #fff;
-      }
-      #custom-loader h1 {
-        font-size: 3em;
-        color: #cc0000;
-        text-shadow: 2px 2px 0px #000;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
-      }
-      #custom-loader .subtitle {
-        font-size: 1.1em;
-        color: #888;
-        margin-bottom: 40px;
-      }
-      .load-section {
-        width: 500px;
-        max-width: 90vw;
-        margin-bottom: 24px;
-      }
-      .load-section .label {
-        font-size: 1em;
-        color: #aaa;
-        margin-bottom: 6px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .load-section .label span {
-        color: #666;
-        font-size: 0.85em;
-      }
-      .cache-badge {
-        background: #1a4a1a;
-        color: #4caf50;
-        font-size: 0.75em;
-        padding: 2px 8px;
-        border-radius: 10px;
-        border: 1px solid #4caf50;
-        display: none;
-      }
-      .bar-bg {
-        width: 100%;
-        height: 28px;
+        display: grid;
+        place-items: center;
         background: #111;
-        border: 2px solid #333;
-        border-radius: 4px;
-        overflow: hidden;
+        z-index: 1;
       }
-      .bar-fill {
-        height: 100%;
-        width: 0%;
-        background: #cc0000;
-        transition: width 0.2s ease;
-      }
-      .bar-fill.cached {
-        background: #4caf50;
-        width: 100% !important;
-        transition: none;
-      }
-      #status-text {
-        font-size: 1em;
-        color: #555;
-        margin-top: 20px;
-        min-height: 1.5em;
-        text-align: center;
-      }
-      #cache-status {
-        font-size: 0.85em;
-        color: #4caf50;
-        margin-top: 6px;
-        min-height: 1.2em;
-        text-align: center;
-      }
-      #error-text {
-        color: #cc0000;
-        font-size: 0.95em;
-        margin-top: 10px;
-        text-align: center;
-        max-width: 500px;
-      }
-      #clear-cache-btn {
-        margin-top: 20px;
-        background: transparent;
-        border: 1px solid #333;
-        color: #555;
-        font-family: "Comic Sans MS", cursive;
-        font-size: 0.8em;
-        padding: 6px 14px;
-        border-radius: 4px;
-        cursor: pointer;
-        display: none;
-      }
-      #clear-cache-btn:hover {
-        border-color: #cc0000;
-        color: #cc0000;
-      }
+      #loading-content { width: min(340px, calc(100vw - 40px)); }
+      #loading-title { margin: 0 0 12px; font-size: 20px; font-weight: normal; }
+      #loading-status { margin: 0 0 12px; color: #bbb; font-size: 14px; }
+      #loading-progress { display: block; width: 100%; height: 12px; }
     </style>
   </head>
   <body>
-    <div id="custom-loader">
-      <h1><span style="color: white">Cup</span>head</h1>
-      <div class="subtitle" id="subtitle-text">
-        first load takes long... SFOOLS FOREVER
+    <div id="loading" role="status" aria-live="polite">
+      <div id="loading-content">
+        <h1 id="loading-title">Loading Cuphead</h1>
+        <p id="loading-status">Preparing files...</p>
+        <progress id="loading-progress" max="1" value="0"></progress>
       </div>
-
-      <div class="load-section">
-        <div class="label">
-          Cuphead.wasm
-          <span id="wasm-detail">(0 / 2 parts)</span>
-          <span class="cache-badge" id="wasm-cache-badge">✓ CACHED</span>
-        </div>
-        <div class="bar-bg"><div class="bar-fill" id="wasm-bar"></div></div>
-      </div>
-
-      <div class="load-section">
-        <div class="label">
-          Cuphead.data
-          <span id="data-detail">(0 / 65 parts)</span>
-          <span class="cache-badge" id="data-cache-badge">✓ CACHED</span>
-        </div>
-        <div class="bar-bg"><div class="bar-fill" id="data-bar"></div></div>
-      </div>
-
-      <div id="status-text">Preparing to load...</div>
-      <div id="cache-status"></div>
-      <div id="error-text"></div>
-      <button id="clear-cache-btn" onclick="clearCache()">
-        clear cache &amp; reload
-      </button>
     </div>
-
-    <div
-      id="unity-container"
-      style="
-        display: none;
-        width: 100vw;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      "
-    >
-      <canvas
-        id="unity-canvas"
-        style="width: 100%; height: 100%; display: block"
-        tabindex="-1"
-      ></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"></div>
-    </div>
-
+    <canvas id="unity-canvas"></canvas>
+    <script src="Build/Cuphead.loader.js"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
+      const canvas = document.getElementById('unity-canvas');
+      const loading = document.getElementById('loading');
+      const status = document.getElementById('loading-status');
+      const progress = document.getElementById('loading-progress');
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var warningBanner = document.querySelector("#unity-warning");
+      // Each build part is at most 19,000,000 bytes. Keep these counts in sync
+      // with the files in Build/ when repacking the Unity build.
+      const builds = [
+        { name: 'data', count: 71, type: 'application/octet-stream' },
+        { name: 'wasm', count: 2, type: 'application/wasm' }
+      ];
+      const totalParts = builds.reduce((sum, build) => sum + build.count, 0);
+      let completedParts = 0;
 
-      var buildUrl = "Build";
-
-      // ── IndexedDB cache helpers ──────────────────────────────────────────────
-
-      const DB_NAME = "cuphead-cache";
-      const DB_VERSION = 1;
-      const STORE_NAME = "files";
-
-      function openDB() {
-        return new Promise((resolve, reject) => {
-          const req = indexedDB.open(DB_NAME, DB_VERSION);
-          req.onupgradeneeded = (e) =>
-            e.target.result.createObjectStore(STORE_NAME);
-          req.onsuccess = (e) => resolve(e.target.result);
-          req.onerror = () => reject(req.error);
-        });
+      async function loadBuild(build) {
+        const parts = [];
+        for (let i = 1; i <= build.count; i++) {
+          const partName = `${build.name}.part${String(i).padStart(3, '0')}`;
+          status.textContent = `Loading ${build.name} part ${i} of ${build.count} (${completedParts} of ${totalParts} parts complete)`;
+          const response = await fetch(`Build/Cuphead.${partName}`);
+          if (!response.ok) throw new Error(`Could not load ${partName} (HTTP ${response.status})`);
+          parts.push(await response.blob());
+          completedParts++;
+          progress.value = 0.9 * completedParts / totalParts;
+        }
+        return URL.createObjectURL(new Blob(parts, { type: build.type }));
       }
 
-      async function dbGet(db, key) {
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, "readonly");
-          const req = tx.objectStore(STORE_NAME).get(key);
-          req.onsuccess = () => resolve(req.result || null);
-          req.onerror = () => reject(req.error);
-        });
-      }
-
-      async function dbPut(db, key, value) {
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, "readwrite");
-          const req = tx.objectStore(STORE_NAME).put(value, key);
-          req.onsuccess = () => resolve();
-          req.onerror = () => reject(req.error);
-        });
-      }
-
-      async function clearCache() {
+      (async () => {
+        let dataUrl;
+        let codeUrl;
         try {
-          await new Promise((res, rej) => {
-            const req = indexedDB.deleteDatabase(DB_NAME);
-            req.onsuccess = res;
-            req.onerror = rej;
+          dataUrl = await loadBuild(builds[0]);
+          codeUrl = await loadBuild(builds[1]);
+          status.textContent = 'Starting game...';
+          await createUnityInstance(canvas, {
+            dataUrl,
+            frameworkUrl: 'Build/Cuphead.framework.js',
+            codeUrl,
+            streamingAssetsUrl: 'StreamingAssets',
+            companyName: 'crackers',
+            productName: 'Cuphead',
+            productVersion: '1.0'
+          }, unityProgress => {
+            progress.value = 0.9 + 0.1 * unityProgress;
           });
-        } catch (e) {}
-        location.reload();
-      }
-
-      // ── Fetch helpers ────────────────────────────────────────────────────────
-
-      async function fetchParts(baseName, numParts, barId, detailId) {
-        const bar = document.getElementById(barId);
-        const detail = document.getElementById(detailId);
-
-        // Pre-allocate: fetch all sizes first via HEAD to know total, OR
-        // stream-and-copy to avoid double-buffering all chunks simultaneously.
-        // We collect chunk sizes first, allocate once, then fill.
-        const sizes = [];
-        let total = 0;
-
-        // Phase 1: fetch all chunks but only keep one at a time to minimise peak RAM.
-        // We need the combined buffer, so we must store them — but we release the
-        // intermediate ArrayBuffer reference as soon as it's copied.
-        let combined = null;
-        let offset = 0;
-
-        for (let i = 1; i <= numParts; i++) {
-          const url = `${buildUrl}/${baseName}.part${i}`;
-          detail.textContent = `(${i - 1} / ${numParts} parts)`;
-
-          const resp = await fetch(url);
-          if (!resp.ok)
-            throw new Error(
-              `Failed to fetch ${url}: ${resp.status} ${resp.statusText}`,
-            );
-
-          const buf = await resp.arrayBuffer();
-          sizes.push(buf.byteLength);
-          total += buf.byteLength;
-
-          // Lazy-allocate combined buffer after first chunk so we know we're making progress
-          if (combined === null) {
-            // We don't know total yet on first chunk, so store chunks temporarily
-            // until we have them all — but free each as we copy.
-            // Simple approach: just accumulate, JS GC will handle it.
-            // The key saving vs original: we don't double-copy at the end.
-          }
-
-          // Store chunks array
-          if (!fetchParts._chunks) fetchParts._chunks = [];
-          fetchParts._chunks.push(buf);
-
-          bar.style.width = (i / numParts) * 100 + "%";
-          detail.textContent = `(${i} / ${numParts} parts)`;
+          loading.remove();
+        } catch (error) {
+          console.error(error);
+          status.textContent = `Loading failed: ${error.message || error}`;
+        } finally {
+          if (dataUrl) URL.revokeObjectURL(dataUrl);
+          if (codeUrl) URL.revokeObjectURL(codeUrl);
         }
-
-        // Combine
-        const chunks = fetchParts._chunks;
-        fetchParts._chunks = null;
-        const result = new Uint8Array(total);
-        let off = 0;
-        for (const chunk of chunks) {
-          result.set(new Uint8Array(chunk), off);
-          off += chunk.byteLength;
-        }
-        return result.buffer;
-      }
-
-      // ── Main load + cache logic ──────────────────────────────────────────────
-
-      async function getBufferCached(
-        db,
-        cacheKey,
-        fetchFn,
-        barId,
-        detailId,
-        badgeId,
-      ) {
-        const cacheStatus = document.getElementById("cache-status");
-        const bar = document.getElementById(barId);
-        const badge = document.getElementById(badgeId);
-
-        if (db) {
-          try {
-            const cached = await dbGet(db, cacheKey);
-            if (cached) {
-              bar.classList.add("cached");
-              badge.style.display = "inline";
-              document.getElementById(detailId).textContent = "";
-              return cached;
-            }
-          } catch (e) {
-            console.warn("Cache read failed:", e);
-          }
-        }
-
-        // Not cached — fetch it
-        const buffer = await fetchFn();
-
-        // Try to store in cache
-        if (db) {
-          try {
-            cacheStatus.textContent = `Saving to cache for faster future loads...`;
-            await dbPut(db, cacheKey, buffer);
-            cacheStatus.textContent = `✓ Saved to cache!`;
-          } catch (e) {
-            cacheStatus.textContent = `(Could not cache — storage may be full)`;
-            console.warn("Cache write failed:", e);
-          }
-        }
-
-        return buffer;
-      }
-
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length
-            ? "block"
-            : "none";
-        }
-        var div = document.createElement("div");
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == "error") div.style = "background: red; padding: 10px;";
-        else {
-          if (type == "warning")
-            div.style = "background: yellow; padding: 10px;";
-          setTimeout(function () {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
-
-      async function loadAndStart() {
-        const statusText = document.getElementById("status-text");
-        const cacheStatus = document.getElementById("cache-status");
-        const errorText = document.getElementById("error-text");
-        const subtitleText = document.getElementById("subtitle-text");
-        const clearBtn = document.getElementById("clear-cache-btn");
-
-        // Open IndexedDB (non-fatal if it fails)
-        let db = null;
-        try {
-          db = await openDB();
-        } catch (e) {
-          console.warn("IndexedDB unavailable, caching disabled:", e);
-        }
-
-        try {
-          // Check if both are already cached to update subtitle
-          let wasmCached = false,
-            dataCached = false;
-          if (db) {
-            try {
-              wasmCached = !!(await dbGet(db, "cuphead.wasm"));
-              dataCached = !!(await dbGet(db, "cuphead.data"));
-            } catch (e) {}
-          }
-
-          if (wasmCached && dataCached) {
-            subtitleText.textContent = "loading from cache — should be quick!";
-            clearBtn.style.display = "inline-block";
-          }
-
-          statusText.textContent = "Loading Cuphead.wasm...";
-          const wasmBuffer = await getBufferCached(
-            db,
-            "cuphead.wasm",
-            () => fetchParts("Cuphead.wasm", 2, "wasm-bar", "wasm-detail"),
-            "wasm-bar",
-            "wasm-detail",
-            "wasm-cache-badge",
-          );
-
-          statusText.textContent = "Loading Cuphead.data...";
-          const dataBuffer = await getBufferCached(
-            db,
-            "cuphead.data",
-            () => fetchParts("Cuphead.data", 65, "data-bar", "data-detail"),
-            "data-bar",
-            "data-detail",
-            "data-cache-badge",
-          );
-
-          statusText.textContent = "All parts loaded! Starting game...";
-          cacheStatus.textContent = "";
-
-          const wasmBlob = new Blob([wasmBuffer], { type: "application/wasm" });
-          const dataBlob = new Blob([dataBuffer], {
-            type: "application/octet-stream",
-          });
-          const wasmUrl = URL.createObjectURL(wasmBlob);
-          const dataUrl = URL.createObjectURL(dataBlob);
-
-          document.getElementById("custom-loader").style.display = "none";
-          container.style.display = "";
-          loadingBar.style.display = "block";
-
-          var loaderUrl = buildUrl + "/Cuphead.loader.js";
-          var config = {
-            dataUrl: dataUrl,
-            frameworkUrl: buildUrl + "/Cuphead.framework.js",
-            codeUrl: wasmUrl,
-            streamingAssetsUrl: "StreamingAssets",
-            companyName: "AstraaXD",
-            productName: "Cuphead",
-            productVersion: "1.0",
-            showBanner: unityShowBanner,
-          };
-
-          if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            var meta = document.createElement("meta");
-            meta.name = "viewport";
-            meta.content =
-              "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
-            document.getElementsByTagName("head")[0].appendChild(meta);
-          }
-
-          var script = document.createElement("script");
-          script.src = loaderUrl;
-          script.onload = () => {
-            createUnityInstance(canvas, config, (progress) => {
-              progressBarFull.style.width = 100 * progress + "%";
-            })
-              .then((unityInstance) => {
-                loadingBar.style.display = "none";
-                URL.revokeObjectURL(wasmUrl);
-                URL.revokeObjectURL(dataUrl);
-              })
-              .catch((message) => {
-                alert(message);
-              });
-          };
-          document.body.appendChild(script);
-        } catch (err) {
-          statusText.textContent = "Failed to load files!";
-
-          if (
-            err.name === "RangeError" ||
-            (err.message && err.message.toLowerCase().includes("memory"))
-          ) {
-            errorText.textContent =
-              "Out of memory — try closing other tabs and reloading.";
-          } else if (err.name === "QuotaExceededError") {
-            errorText.textContent =
-              "Storage full — game loaded but couldn't be cached. Try clearing cache.";
-          } else {
-            errorText.textContent = "Error: " + err.message;
-          }
-
-          clearBtn.style.display = "inline-block";
-          console.error(err);
-        }
-      }
-
-      loadAndStart();
+      })();
     </script>
   </body>
 </html>

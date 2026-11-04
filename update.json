@@ -1,8 +1,11 @@
 {
-  "version": "2.5.7",
-  "tip": "was gonna fix ai and foolflix but server provider kicked me out my account cause 'my identity couldn't be verified' so hopefully I can get it back zoon",
+  "version": "2.6.0",
+  "tip": "MANGA & MORE",
   "list": [
-    "fixed legostar wars and fireemblem",
-    "added 4 games including Geomtry Dash web port"
+    "fixed foolflix",
+    "added manga onto proxy (look at quick links)",
+    "optimized proxy (if 2 many people are on it, it will be slower)",
+    "fixed cuphead, tomodachi life",
+    "file hoster for the games somtimes just serves stale files which breaks the games (report any issues please)"
   ]
 }
