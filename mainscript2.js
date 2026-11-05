@@ -921,6 +921,7 @@ async function initNewUI() {
       <label class="new-ui-search"><span aria-hidden="true">⌕</span><input type="search" id="new-ui-search" placeholder="search games" autocomplete="off"></label>
       <nav class="new-ui-nav" aria-label="site navigation">
         <button type="button" class="new-ui-shittify" data-action="shittify" aria-label="open Shittify" title="Shittify"><img src="https://cdn.jsdelivr.net/gh/SomeRandomFella/shittifylol@master/logo.png" alt=""></button>
+        <button type="button" data-action="proxy">proxy</button>
         <button type="button" data-action="movies">movies &amp; shows</button>
         <button type="button" data-action="ai">ai</button>
         <button type="button" data-action="chat">chat</button>
@@ -957,6 +958,8 @@ async function initNewUI() {
   ui.querySelector(".new-ui-nav").addEventListener("click", (event) => {
     const action = event.target.closest("[data-action]")?.dataset.action;
     if (action === "movies") openExtraPage("FoolFlix.html");
+    else if (action === "proxy")
+      openBuhProxy(event.target.closest("[data-action]"));
     else if (action === "shittify") openExtraPage("shittify21.html");
     else if (action === "ai") openAiOverlay();
     else if (action === "chat") {
@@ -1996,6 +1999,51 @@ async function fetchBuhPage() {
   throw new Error("could not load buh.html from any configured mirror");
 }
 
+async function openBuhProxy(proxyBtn) {
+  proxyBtn.blur();
+  const useOverlay = Boolean(bypassOn);
+  const popup = useOverlay ? null : window.open("", "_blank");
+  if (!useOverlay && !popup) {
+    log("proxy: allow popups to open buh", "warn");
+    return;
+  }
+  proxyBtn.disabled = true;
+  try {
+    const pageHtml = await fetchBuhPage();
+    if (useOverlay) {
+      const overlay = document.createElement("div");
+      overlay.id = "bypass-overlay";
+      overlay.classList.add("bypass-overlay");
+      const closeBtn = document.createElement("button");
+      closeBtn.classList.add("bypass-close-btn");
+      closeBtn.textContent = "\u00d7";
+      closeBtn.setAttribute("aria-label", "close proxy");
+      const iframe = document.createElement("iframe");
+      iframe.classList.add("bypass-iframe");
+      iframe.title = "buh proxy";
+      iframe.allow =
+        "fullscreen; autoplay; camera; microphone; clipboard-write";
+      iframe.srcdoc = pageHtml;
+      overlay.appendChild(iframe);
+      document.body.appendChild(overlay);
+      document.body.appendChild(closeBtn);
+      closeBtn.addEventListener("click", () => {
+        overlay.remove();
+        closeBtn.remove();
+      });
+    } else if (!popup.closed) {
+      popup.document.open();
+      popup.document.write(pageHtml);
+      popup.document.close();
+    }
+  } catch (error) {
+    if (popup && !popup.closed) popup.close();
+    log("proxy: " + error.message, "error");
+  } finally {
+    proxyBtn.disabled = false;
+  }
+}
+
 function addUIElements() {
   const existing = document.getElementById("btn-strip");
   if (existing) existing.remove();
@@ -2017,50 +2065,7 @@ function addUIElements() {
   const proxyBtn = document.createElement("button");
   proxyBtn.classList.add("button-general", "button-log", "dl-latest");
   proxyBtn.textContent = "proxy";
-  proxyBtn.addEventListener("click", async () => {
-    proxyBtn.blur();
-    const useOverlay = Boolean(bypassOn);
-    const popup = useOverlay ? null : window.open("", "_blank");
-    if (!useOverlay && !popup) {
-      log("proxy: allow popups to open buh", "warn");
-      return;
-    }
-    proxyBtn.disabled = true;
-    try {
-      const pageHtml = await fetchBuhPage();
-      if (useOverlay) {
-        const overlay = document.createElement("div");
-        overlay.id = "bypass-overlay";
-        overlay.classList.add("bypass-overlay");
-        const closeBtn = document.createElement("button");
-        closeBtn.classList.add("bypass-close-btn");
-        closeBtn.textContent = "\u00d7";
-        closeBtn.setAttribute("aria-label", "close proxy");
-        const iframe = document.createElement("iframe");
-        iframe.classList.add("bypass-iframe");
-        iframe.title = "buh proxy";
-        iframe.allow =
-          "fullscreen; autoplay; camera; microphone; clipboard-write";
-        iframe.srcdoc = pageHtml;
-        overlay.appendChild(iframe);
-        document.body.appendChild(overlay);
-        document.body.appendChild(closeBtn);
-        closeBtn.addEventListener("click", () => {
-          overlay.remove();
-          closeBtn.remove();
-        });
-      } else if (!popup.closed) {
-        popup.document.open();
-        popup.document.write(pageHtml);
-        popup.document.close();
-      }
-    } catch (error) {
-      if (popup && !popup.closed) popup.close();
-      log("proxy: " + error.message, "error");
-    } finally {
-      proxyBtn.disabled = false;
-    }
-  });
+  proxyBtn.addEventListener("click", () => openBuhProxy(proxyBtn));
   strip.appendChild(proxyBtn);
 
   const button3 = document.createElement("button");
