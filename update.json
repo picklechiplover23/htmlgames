@@ -1,11 +1,8 @@
 {
-  "version": "2.6.0",
-  "tip": "MANGA & MORE",
+  "version": "2.6.1",
+  "tip": "I PROMISE",
   "list": [
-    "fixed foolflix",
-    "added manga onto proxy (look at quick links)",
-    "optimized proxy (if 2 many people are on it, it will be slower)",
-    "fixed cuphead, tomodachi life",
-    "file hoster for the games somtimes just serves stale files which breaks the games (report any issues please)"
+    "old file hoster replaced (it would keep just not serving the fucking files which would break games)",
+    "cache reset the proxy (manga shortcut should show in quick links now and youtube is fixed on proxy)"
   ]
 }
