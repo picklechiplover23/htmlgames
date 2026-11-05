@@ -1309,7 +1309,7 @@ function actuallyLaunch(openedWindow) {
 
     const iframe = document.createElement("iframe");
     iframe.classList.add("bypass-iframe");
-    iframe.srcdoc = html;
+    iframe.srcdoc = withGameAssetFallback(html);
 
     overlay.appendChild(iframe);
     document.body.appendChild(overlay);
@@ -1328,7 +1328,7 @@ function actuallyLaunch(openedWindow) {
   if (!gameWindow) return;
 
   gameWindow.document.open();
-  gameWindow.document.write(html);
+  gameWindow.document.write(withGameAssetFallback(html));
   gameWindow.document.close();
 
   setTimeout(() => {
@@ -2373,3 +2373,163 @@ document.addEventListener("contextmenu", function (e) {
   e.preventDefault();
   return false;
 });
+function installGameAssetFallback() {
+  if (window.__sfoolsAssetFallback) return;
+  window.__sfoolsAssetFallback = true;
+  const backend =
+    "https://sfools-stuff-342b8fbbb030.herokuapp.com/github-assets/file?url=";
+  function fallback(value) {
+    try {
+      const url = new URL(value, document.baseURI);
+      if (
+        url.protocol === "https:" &&
+        /^(?:cdn|fastly|gcore|testingcf)\.jsdelivr\.net$/.test(url.hostname) &&
+        url.pathname.startsWith("/gh/")
+      )
+        return backend + encodeURIComponent(url.href);
+    } catch {}
+    return null;
+  }
+  const originalFetch = window.fetch;
+  window.fetch = async function (input, init) {
+    const url = fallback(input instanceof Request ? input.url : input);
+    const method =
+      init?.method || (input instanceof Request ? input.method : "GET");
+    if (!url || !/^(GET|HEAD)$/i.test(method))
+      return originalFetch.call(this, input, init);
+    const request = new Request(input, init);
+    let response;
+    try {
+      response = await originalFetch.call(this, request.clone());
+      if (response.ok || response.type === "opaque") return response;
+    } catch (error) {
+      if (request.signal.aborted) throw error;
+    }
+    if (response?.body) response.body.cancel().catch(() => {});
+    return originalFetch.call(this, url, {
+      method: request.method,
+      signal: request.signal,
+      credentials: "omit",
+      mode: "cors",
+      headers: request.headers.has("range")
+        ? { Range: request.headers.get("range") }
+        : {},
+    });
+  };
+  const NativeXHR = window.XMLHttpRequest;
+  window.XMLHttpRequest = class extends NativeXHR {
+    constructor() {
+      super();
+      let args,
+        body,
+        retried = false,
+        retrying = false,
+        headers = [];
+      const open = this.open,
+        send = this.send,
+        setHeader = this.setRequestHeader;
+      this.open = (...values) => {
+        args = values;
+        retried = false;
+        headers = [];
+        return open.apply(this, values);
+      };
+      this.setRequestHeader = (name, value) => {
+        headers.push([name, value]);
+        return setHeader.call(this, name, value);
+      };
+      this.send = (value) => {
+        body = value;
+        return send.call(this, value);
+      };
+      const canRetry = () =>
+        !retried &&
+        args &&
+        args[2] !== false &&
+        /^(GET|HEAD)$/i.test(args[0]) &&
+        fallback(args[1]);
+      const intercept = (event) => {
+        const failed =
+          event.type === "error" ||
+          event.type === "timeout" ||
+          (this.readyState === 4 && this.status >= 400);
+        if (retrying) {
+          event.stopImmediatePropagation();
+          return;
+        }
+        const url = failed && canRetry();
+        if (!url) return;
+        event.stopImmediatePropagation();
+        retried = true;
+        retrying = true;
+        queueMicrotask(() => {
+          const type = this.responseType,
+            timeout = this.timeout;
+          open.call(this, args[0], url, true);
+          this.responseType = type;
+          this.timeout = timeout;
+          this.withCredentials = false;
+          for (const [name, value] of headers)
+            if (name.toLowerCase() === "range")
+              setHeader.call(this, name, value);
+          retrying = false;
+          send.call(this, body);
+        });
+      };
+      for (const name of [
+        "readystatechange",
+        "error",
+        "timeout",
+        "load",
+        "loadend",
+      ])
+        this.addEventListener(name, intercept);
+    }
+  };
+  const retried = new WeakSet();
+  window.addEventListener(
+    "error",
+    (event) => {
+      const element = event.target;
+      if (!element || retried.has(element)) return;
+      const attribute = element.tagName === "LINK" ? "href" : "src";
+      if (
+        !["SCRIPT", "LINK", "IMG", "AUDIO", "VIDEO", "SOURCE"].includes(
+          element.tagName,
+        )
+      )
+        return;
+      const url = fallback(element[attribute]);
+      if (!url) return;
+      retried.add(element);
+      event.stopImmediatePropagation();
+      if (element.tagName === "SCRIPT") {
+        const replacement = document.createElement("script");
+        for (const attr of element.attributes)
+          if (attr.name !== "src")
+            replacement.setAttribute(attr.name, attr.value);
+        replacement.async = element.async;
+        replacement.onload = element.onload;
+        replacement.onerror = element.onerror;
+        retried.add(replacement);
+        replacement.src = url;
+        element.replaceWith(replacement);
+      } else {
+        element[attribute] = url;
+      }
+    },
+    true,
+  );
+}
+
+function withGameAssetFallback(source) {
+  const injection =
+    "<script>(" + installGameAssetFallback.toString() + ")();<\/script>";
+  const head = /<head(?:\s[^>]*)?>/i;
+  if (head.test(source))
+    return source.replace(head, (match) => match + injection);
+  const doctype = /^\s*<!doctype[^>]*>/i;
+  if (doctype.test(source))
+    return source.replace(doctype, (match) => match + injection);
+  return injection + source;
+}
