@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
-    <base
-      href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips@master/btd6/"
-    />
+    <base href="https://cdn.jsdelivr.net/gh/SomeRandomFella/portsandrips@master/btd6/">
 <script src="split-loader.js?v=tutorial-all19mb-20261111"></script>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -93,7 +91,9 @@ html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden 
         updateBannerVisibility();
       }
 
-      var buildUrl = "Build";
+      // Unity resolves StreamingAssets against document.URL, ignoring <base>.
+      // Resolve both asset roots explicitly so CDN-hosted builds use one origin.
+      var buildUrl = new URL("Build", document.baseURI).href;
       var loaderUrl = buildUrl + "/02cb7006f5636c95ded66b8dd5612e06.loader.js";
       var config = {
         autoSyncPersistentDataPath: true,
@@ -102,7 +102,7 @@ html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden 
         dataUrl: buildUrl + "/d9c12d9b2d770bbc731835177d97fce3.data",
         frameworkUrl: buildUrl + "/0016d840ae4602fbd8fad8aca92552f1.framework.js",
         codeUrl: buildUrl + "/794c8a20019ab38dd0ef48bfcce00b64.wasm",
-        streamingAssetsUrl: "StreamingAssets",
+        streamingAssetsUrl: new URL("StreamingAssets", document.baseURI).href,
         companyName: "Ninja Kiwi",
         productName: "BloonsTD6",
         productVersion: "56.3",
