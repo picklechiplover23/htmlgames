@@ -1,8 +1,8 @@
 {
-  "version": "2.6.2",
-  "tip": "proxy hotfix",
+  "version": "2.6.3",
+  "tip": "blah",
   "list": [
-    "unblocked proxy",
-    "do people still use tis"
+    "added Bloons TD 6 (port) pretty buggy beta though keep in mind",
+    "fixed youtube and soundcloud and other proxy issues."
   ]
 }
